@@ -420,7 +420,7 @@ README: PowerShell setup/run (`streamlit run app/streamlit_app.py`), text archit
 
 ---
 
-## Summary of decisions needed with "approved"
+## Summary of decisions (ALL APPROVED by the owner 2026-11-01, as recommended)
 - D-1 two extra JSON files for numeric rules/thresholds (or module constants).
 - D-2 slump lookup for Mode A: midpoint interpolation (spec) vs band reading (recommended option b).
 - D-3 `presets` JSON kind for model_constants.json (or mapping + notes).

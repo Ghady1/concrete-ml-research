@@ -42,7 +42,9 @@ Added during planning:
 31. **Sigma given without n** (number of test results). Assume F = 1.00 (n >= 30) and flag, or treat sigma as unknown? (default: F = 1.00 + flag.)
 32. **Shape-reduction values** (subangular 12, gravel with crushed 21, round gravel 27 kg/m3). Please confirm their primary source; they are not part of the main ACI 211.1 water table.
 
-## Part B - decisions for the owner (answer with "approved")
+## Part B - decisions for the owner
+
+**Resolved 2026-11-01: owner approved all of D-1 to D-6 as recommended** (D-1 add the two JSON files; D-2 option (b): `slump_lookup="band"` for Mode A; D-3 `presets` kind; D-4 store the 7-day preset only; D-5 add `pytest-cov` to the dev extra in M16; D-6 `tests/test_slump.py` and early `calibration/fit.py`).
 
 - **D-1** Numeric rules not covered by the allowed JSON list include the f'cr constants, unknown-sigma margins, slide rules, validity ranges and flag thresholds. Add `required_strength_rules.json` + `flag_thresholds.json`? Or keep them as named module constants with source docstrings?
 - **D-2** Mixing-water lookup for the Mode A slump target: pure midpoint interpolation (spec), or an added `slump_lookup="band"` option used by Mode A (recommended)? (Q26)

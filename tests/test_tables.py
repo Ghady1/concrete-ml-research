@@ -239,3 +239,272 @@ def test_valid_label_map_constructs():
 def test_label_map_rejects_empty():
     with pytest.raises(ValueError):
         LabelMap(meta=make_meta(), values={})
+
+
+# ===========================================================================
+# M2 section: tables/interpolate.py
+# ===========================================================================
+
+from hypothesis import given
+from hypothesis import strategies as st
+
+from concretecalc.tables.interpolate import OutOfRangeError, _bracket, interp1d, interp2d
+
+AXIS = np.array([10.0, 20.0, 40.0])
+
+
+# --- _bracket ---------------------------------------------------------------
+
+def test_bracket_inside_range():
+    i0, t, status, warnings = _bracket(30.0, AXIS, "raise", "q")
+    assert i0 == 1
+    assert t == pytest.approx(0.5, abs=1e-15)
+    assert status is Status.OK
+    assert warnings == ()
+
+
+def test_bracket_at_first_and_last_node_is_ok():
+    i0, t, status, _ = _bracket(10.0, AXIS, "raise", "q")
+    assert (i0, t, status) == (0, 0.0, Status.OK)
+    # Last node: searchsorted(side="right") gives len(axis); clipping keeps the last segment, t = 1.
+    i0, t, status, _ = _bracket(40.0, AXIS, "raise", "q")
+    assert (i0, t, status) == (1, 1.0, Status.OK)
+
+
+def test_bracket_at_inner_node_starts_new_segment():
+    i0, t, _, _ = _bracket(20.0, AXIS, "raise", "q")
+    assert (i0, t) == (1, 0.0)
+
+
+def test_bracket_nan_query_raises():
+    with pytest.raises(ValueError):
+        _bracket(float("nan"), AXIS, "clamp", "q")
+
+
+def test_bracket_unknown_policy_raises():
+    with pytest.raises(ValueError):
+        _bracket(15.0, AXIS, "nearest", "q")
+
+
+@pytest.mark.parametrize("v", [5.0, 45.0])
+def test_bracket_raise_policy(v):
+    with pytest.raises(OutOfRangeError, match="q"):
+        _bracket(v, AXIS, "raise", "q")
+
+
+def test_out_of_range_error_is_a_value_error():
+    assert issubclass(OutOfRangeError, ValueError)
+
+
+def test_bracket_clamp_below_and_above():
+    i0, t, status, warnings = _bracket(5.0, AXIS, "clamp", "slump_mm")
+    assert (i0, t, status) == (0, 0.0, Status.CLAMPED)
+    assert len(warnings) == 1
+    # Message states the label, the value and the table range.
+    assert "slump_mm" in warnings[0] and "5" in warnings[0] and "[10, 40]" in warnings[0]
+    i0, t, status, _ = _bracket(45.0, AXIS, "clamp", "slump_mm")
+    assert (i0, t, status) == (1, 1.0, Status.CLAMPED)
+
+
+def test_bracket_extrapolate_uses_end_segments():
+    i0, t, status, warnings = _bracket(5.0, AXIS, "extrapolate", "q")
+    assert i0 == 0 and t == pytest.approx(-0.5, abs=1e-15) and status is Status.EXTRAPOLATED
+    assert len(warnings) == 1
+    i0, t, status, _ = _bracket(50.0, AXIS, "extrapolate", "q")
+    assert i0 == 1 and t == pytest.approx(1.5, abs=1e-15) and status is Status.EXTRAPOLATED
+
+
+# --- interp1d ----------------------------------------------------------------
+
+XS = np.array([14.0, 21.0, 28.0])
+YS = np.array([0.82, 0.68, 0.57])
+
+
+def test_interp1d_exact_nodes():
+    for x, y in zip(XS, YS):
+        result = interp1d(x, XS, YS, "raise", "fcr_mpa")
+        assert result.value == pytest.approx(y, abs=1e-15)
+        assert result.status is Status.OK
+
+
+def test_interp1d_midpoint():
+    result = interp1d(17.5, XS, YS, "raise", "fcr_mpa")
+    assert result.value == pytest.approx((0.82 + 0.68) / 2, abs=1e-15)
+
+
+@pytest.mark.parametrize(
+    "x, expected_value, expected_status",
+    [
+        (7.0, 0.82, Status.CLAMPED),
+        (35.0, 0.57, Status.CLAMPED),
+    ],
+)
+def test_interp1d_clamp(x, expected_value, expected_status):
+    result = interp1d(x, XS, YS, "clamp", "fcr_mpa")
+    assert result.value == pytest.approx(expected_value, abs=1e-15)
+    assert result.status is expected_status
+    assert len(result.warnings) == 1
+
+
+def test_interp1d_extrapolate_both_ends():
+    below = interp1d(7.0, XS, YS, "extrapolate", "fcr_mpa")
+    # slope of first segment = (0.68 - 0.82)/7 = -0.02 per MPa -> 0.82 + 0.14 = 0.96
+    assert below.value == pytest.approx(0.96, abs=1e-12)
+    assert below.status is Status.EXTRAPOLATED
+    above = interp1d(35.0, XS, YS, "extrapolate", "fcr_mpa")
+    # last segment slope = (0.57 - 0.68)/7 -> 0.57 - 0.11 = 0.46
+    assert above.value == pytest.approx(0.46, abs=1e-12)
+
+
+def test_interp1d_raise_policy():
+    with pytest.raises(OutOfRangeError):
+        interp1d(50.0, XS, YS, "raise", "fcr_mpa")
+
+
+def test_interp1d_drops_nan_points():
+    # Like the AE column of the w/c table: no value at 48 MPa.
+    xs = np.array([35.0, 41.0, 48.0])
+    ys = np.array([0.40, 0.32, np.nan])
+    result = interp1d(45.0, xs, ys, "extrapolate", "fcr_mpa")
+    assert result.status is Status.EXTRAPOLATED  # 48 was dropped, so 45 is beyond 41
+    assert result.value == pytest.approx(0.32 - 4 * (0.08 / 6), abs=1e-12)
+
+
+def test_interp1d_inverts_a_decreasing_column():
+    # Inversion: query by the w/c column (decreasing with strength) to get strength back.
+    result = interp1d(0.68, YS, XS, "raise", "wc")
+    assert result.value == pytest.approx(21.0, abs=1e-12)
+    assert result.status is Status.OK
+    middle = interp1d(0.625, YS, XS, "raise", "wc")
+    assert middle.value == pytest.approx(24.5, abs=1e-12)
+
+
+def test_interp1d_fewer_than_two_points_is_unavailable():
+    result = interp1d(1.0, np.array([1.0, 2.0]), np.array([5.0, np.nan]), "clamp", "q")
+    assert result.value is None
+    assert result.status is Status.UNAVAILABLE
+    assert len(result.warnings) == 1
+
+
+def test_interp1d_repeated_x_raises():
+    with pytest.raises(ValueError):
+        interp1d(1.0, np.array([1.0, 1.0, 2.0]), np.array([1.0, 2.0, 3.0]), "clamp", "q")
+
+
+def test_interp1d_mismatched_lengths_raise():
+    with pytest.raises(ValueError):
+        interp1d(1.0, np.array([1.0, 2.0]), np.array([1.0, 2.0, 3.0]), "clamp", "q")
+
+
+def test_interp1d_returns_python_float():
+    result = interp1d(17.5, XS, YS, "raise", "q")
+    assert type(result.value) is float
+
+
+@given(
+    slope=st.floats(-100, 100),
+    intercept=st.floats(-100, 100),
+    x=st.floats(14.0, 28.0),
+)
+def test_interp1d_reproduces_linear_functions(slope, intercept, x):
+    ys = slope * XS + intercept
+    result = interp1d(x, XS, ys, "raise", "q")
+    assert result.value == pytest.approx(slope * x + intercept, rel=1e-9, abs=1e-9)
+
+
+@given(x=st.floats(14.0, 28.0))
+def test_interp1d_value_lies_between_bracketing_points(x):
+    result = interp1d(x, XS, YS, "raise", "q")
+    assert min(YS) - 1e-12 <= result.value <= max(YS) + 1e-12
+
+
+# --- interp2d ----------------------------------------------------------------
+
+ROWS = np.array([37.5, 87.5, 162.5])
+COLS = np.array([9.5, 12.5, 19.0])
+GRID = np.array(
+    [
+        [207.0, 199.0, 190.0],
+        [228.0, 216.0, 205.0],
+        [243.0, 228.0, np.nan],
+    ]
+)
+
+
+def i2(r, c, policy="raise"):
+    return interp2d(r, c, ROWS, COLS, GRID, policy, "slump_mm", "nmas_mm")
+
+
+def test_interp2d_exact_node():
+    result = i2(87.5, 19.0)
+    assert result.value == pytest.approx(205.0, abs=1e-12)
+    assert result.status is Status.OK
+
+
+def test_interp2d_on_row_between_columns():
+    result = i2(87.5, 15.75)  # halfway between 12.5 and 19
+    assert result.value == pytest.approx((216 + 205) / 2, abs=1e-12)
+
+
+def test_interp2d_bilinear_centre():
+    result = i2(62.5, 11.0)  # centre of the first cell
+    assert result.value == pytest.approx((207 + 199 + 228 + 216) / 4, abs=1e-12)
+
+
+def test_interp2d_null_corner_with_weight_is_unavailable():
+    result = i2(125.0, 15.75)  # cell touching the NaN at (162.5, 19)
+    assert result.value is None
+    assert result.status is Status.UNAVAILABLE
+    assert any("slump_mm" in w and "nmas_mm" in w for w in result.warnings)
+
+
+def test_interp2d_null_exact_node_is_unavailable():
+    assert i2(162.5, 19.0).status is Status.UNAVAILABLE
+
+
+def test_interp2d_null_corner_with_zero_weight_is_ignored():
+    # On the 162.5 row at 12.5 mm: the NaN neighbour (19 mm) has zero weight.
+    result = i2(162.5, 12.5)
+    assert result.value == pytest.approx(228.0, abs=1e-12)
+    assert result.status is Status.OK
+    # On the 19 mm column at 87.5: the NaN below (162.5 row) has zero weight.
+    assert i2(87.5, 19.0).value == pytest.approx(205.0, abs=1e-12)
+
+
+def test_interp2d_status_is_worst_of_both_axes():
+    result = i2(10.0, 30.0, policy="clamp")  # both axes out of range -> both clamped
+    assert result.status is Status.CLAMPED
+    assert len(result.warnings) == 2
+    assert result.value == pytest.approx(190.0, abs=1e-12)
+
+
+def test_interp2d_clamped_row_extrapolated_col():
+    # Policies apply to both axes; mixing comes from one axis being in range.
+    result = i2(87.5, 25.0, policy="extrapolate")
+    assert result.status is Status.EXTRAPOLATED
+    # last column segment slope on row 87.5: (205-216)/6.5 per mm
+    assert result.value == pytest.approx(205 + 6 * (205 - 216) / 6.5, abs=1e-12)
+
+
+def test_interp2d_raise_policy():
+    with pytest.raises(OutOfRangeError, match="nmas_mm"):
+        i2(87.5, 25.0)
+
+
+def test_interp2d_wrong_grid_shape_raises():
+    with pytest.raises(ValueError):
+        interp2d(50.0, 10.0, ROWS, COLS, GRID[:, :2], "clamp", "r", "c")  # 3x2 vs 3x3 axes
+
+
+@given(
+    a=st.floats(-10, 10),
+    b=st.floats(-10, 10),
+    c=st.floats(-10, 10),
+    r=st.floats(37.5, 87.5),
+    col=st.floats(9.5, 19.0),
+)
+def test_interp2d_reproduces_bilinear_functions(a, b, c, r, col):
+    # f = a*r + b*col + c (planar) is reproduced exactly by bilinear interpolation.
+    grid = a * ROWS[:, None] + b * COLS[None, :] + c
+    result = interp2d(r, col, ROWS, COLS, grid, "raise", "r", "c")
+    assert result.value == pytest.approx(a * r + b * col + c, rel=1e-9, abs=1e-9)
