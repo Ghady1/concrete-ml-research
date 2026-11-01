@@ -7,8 +7,8 @@
 | `src/concretecalc/tables/lookups.py` | Every table read the engine will ever do, with names in engineering words and units |
 | `src/concretecalc/units.py` | Exact unit conversions (moved forward from M5: psi -> MPa needed here) |
 | `src/concretecalc/schemas.py` | Only the `Literal` type aliases for now (shape, exposure, element, durability class, slump lookup) |
-| `tests/test_tables.py` (M4 section) | 136 tests |
-| `tests/test_units.py` | 23 tests (hand values + hypothesis round trips) |
+| `tests/test_tables.py` (M4 section) | 137 tests |
+| `tests/test_units.py` | 22 tests (hand values + hypothesis round trips) |
 
 **Rule:** engine modules (moisture, volumes, strength, ...) import from `lookups`, never from
 `interpolate` or `loader`. `lookups` is the one module that knows table ids, column names and
