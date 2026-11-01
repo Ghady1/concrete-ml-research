@@ -142,7 +142,7 @@ Tests (required by task): (87.5, 19, non-AE, angular) = 205; (87.5, 22, non-AE, 
 **Decision needed D-2 (Q9, Q26):** with midpoint interpolation, a slump target of 75 mm (the table maximum for most elements = default Mode A target) gives non-AE 19 mm water = 190 + 0.75*(205-190) = **201.25 kg/m3**, whereas reading the "75-100 mm" band row gives **205**. The instructor's solutions almost certainly read the band (205). Options: (a) keep pure midpoint interpolation everywhere (task spec), (b) add `slump_lookup: Literal["interpolate","band"]` to `mixing_water_kg_m3` and default Mode A to "band", Mode B slump estimate stays interpolated. I recommend (b) but will not add it without approval.
 
 ## M5 - units.py, schemas.py, validation.py, flags.py
-Files: those 4 + `tests/test_units.py`, `tests/test_validation.py`, `tests/test_architecture.py` (introduced here so purity is enforced from now on).
+Files: those 4 + `tests/test_units.py`, `tests/test_validation.py`, (`tests/test_architecture.py` was moved forward to the M3 follow-up).
 units.py (exact definitions, section 8):
 ```python
 KG_PER_LB = 0.45359237; MM_PER_IN = 25.4; M_PER_YD = 0.9144; MPA_PER_PSI = 0.00689475729

@@ -607,12 +607,75 @@ def test_grid_arrays_are_read_only():
             array[0] = 0.0
 
 
-def test_json_files_are_plain_json_with_envelope():
+PAYLOAD_KEYS = {"series": {"x", "series"}, "grid2d": {"rows", "cols", "variants"}, "mapping": {"values"}}
+
+
+@pytest.mark.parametrize("table_id", ALL_IDS)
+def test_json_files_follow_the_envelope_exactly(table_id):
     data_dir = files("concretecalc") / "data"
-    for table_id in ALL_IDS:
-        raw = json.loads((data_dir / f"{table_id}.json").read_text(encoding="utf-8"))
-        assert set(raw) - {"meta", "kind"} != set()
-        assert set(raw["meta"]) == {"id", "title", "source", "verified_against_primary", "units", "notes"}
+    raw = json.loads((data_dir / f"{table_id}.json").read_text(encoding="utf-8"))
+    assert raw["kind"] in PAYLOAD_KEYS
+    # Exactly meta + kind + the payload keys of that kind; nothing else.
+    assert set(raw) == {"meta", "kind"} | PAYLOAD_KEYS[raw["kind"]]
+    assert set(raw["meta"]) == {"id", "title", "source", "verified_against_primary", "units", "notes"}
+    assert isinstance(raw["meta"]["verified_against_primary"], bool)
+
+
+@pytest.mark.parametrize("table_id", ALL_IDS)
+def test_no_zero_used_as_missing_marker_in_mixing_water_like_tables(table_id):
+    # Task section 4: null means "no data"; 0 must never stand in for it. The only
+    # legitimate zeros are the angular shape reduction and the 0 % soft-limit minima.
+    raw = load_any(table_id)
+    if table_id in ("shape_reduction", "flag_thresholds"):
+        return
+    if table_id in SERIES_IDS:
+        arrays = list(raw.columns.values())
+    elif table_id in GRID_IDS:
+        arrays = list(raw.variants.values())
+    else:
+        arrays = [np.array(list(raw.values.values()))]
+    for array in arrays:
+        assert not np.any(array == 0.0)
+
+
+# --- loader error paths (exercised on in-memory dicts; package data is valid) --
+
+from concretecalc.tables import loader as loader_module
+
+GOOD_META = {"id": "t", "title": "T", "source": "s", "verified_against_primary": False, "units": {}, "notes": ""}
+
+
+def test_check_kind_rejects_wrong_or_missing_kind():
+    with pytest.raises(ValueError, match="kind"):
+        loader_module._check_kind({"kind": "grid2d"}, "t", "series")
+    with pytest.raises(ValueError, match="kind"):
+        loader_module._check_kind({}, "t", "series")
+    loader_module._check_kind({"kind": "series"}, "t", "series")  # no error
+
+
+def test_build_meta_requires_every_key():
+    for key in GOOD_META:
+        meta = dict(GOOD_META)
+        del meta[key]
+        with pytest.raises(ValueError, match=key):
+            loader_module._build_meta({"meta": meta}, "t")
+
+
+def test_build_meta_requires_meta_object():
+    with pytest.raises(ValueError, match="meta"):
+        loader_module._build_meta({}, "t")
+
+
+def test_build_meta_requires_id_to_match_file_name():
+    with pytest.raises(ValueError, match="must match"):
+        loader_module._build_meta({"meta": dict(GOOD_META, id="other")}, "t")
+
+
+def test_read_only_array_converts_null_to_nan():
+    array = loader_module._read_only_array([1, None, 3])
+    assert array.dtype == float
+    assert np.isnan(array[1])
+    assert array.flags.writeable is False
 
 
 # --- full-table checks for the two tables everything depends on --------------

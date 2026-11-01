@@ -78,3 +78,14 @@ dicts. Engine code never modifies them, and the walkthrough exercises show why i
 3. Convert the freeze-thaw minimum strength from `durability.json` to MPa by hand with
    1 psi = 0.00689475729 MPa. Compare it with Example 2's specified f'c of 24.1 MPa: by how many
    MPa does it exceed it?
+
+## Follow-up (after M3 review)
+- The loader's error paths (`_check_kind`, `_build_meta`, `_read_only_array`) are now tested on
+  in-memory dicts. The real data files are all valid, so these paths were never exercised before.
+- The envelope test now requires *exactly* `meta` + `kind` + that kind's payload keys.
+- A new test enforces "null, never 0, for missing data" on every table (except the legitimate
+  zeros: angular shape reduction 0 kg/m3 and the 0 % soft-limit minima).
+- `tests/test_architecture.py` (planned for M5) was moved forward. Ground rule 1 requires a
+  failing test the moment `src/` imports streamlit/matplotlib, and engine code already exists.
+  It parses every `.py` file with `ast` (no importing) and also checks that only
+  `calibration/dataset.py` may import pandas/openpyxl inside `concretecalc`.
