@@ -1,0 +1,24 @@
+{
+  "meta": {
+    "id": "air_content",
+    "title": "Approximate air content",
+    "source": "CIE308 Ch4 Part B slides (Dr. M. Tawk), after ACI 211.1; verify against ACI 211.1-91 and PCA Design and Control of Concrete Mixtures",
+    "verified_against_primary": false,
+    "units": {
+      "x": "mm (NMAS)",
+      "non_ae": "% (entrapped)",
+      "ae_mild": "%",
+      "ae_moderate": "%",
+      "ae_severe": "%"
+    },
+    "notes": "Percent as plain numbers (2.0 means 2 %). AE columns by exposure."
+  },
+  "kind": "series",
+  "x": [9.5, 12.5, 19, 25, 37.5, 50, 75, 150],
+  "series": {
+    "non_ae": [3, 2.5, 2, 1.5, 1, 0.5, 0.3, 0.2],
+    "ae_mild": [4.5, 4.0, 3.5, 3.0, 2.5, 2.0, 1.5, 1.0],
+    "ae_moderate": [6.0, 5.5, 5.0, 4.5, 4.5, 4.0, 3.5, 3.0],
+    "ae_severe": [7.5, 7.0, 6.0, 6.0, 5.5, 5.0, 4.5, 4.0]
+  }
+}

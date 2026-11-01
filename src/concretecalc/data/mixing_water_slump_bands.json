@@ -1,0 +1,21 @@
+{
+  "meta": {
+    "id": "mixing_water_slump_bands",
+    "title": "Slump band edges of the mixing-water table",
+    "source": "CIE308 Ch4 Part B slides (Dr. M. Tawk), after ACI 211.1; verify against ACI 211.1-91 and PCA Design and Control of Concrete Mixtures",
+    "verified_against_primary": false,
+    "units": {
+      "values": "mm"
+    },
+    "notes": "Band labels of the mixing_water rows; used by the band-reading option approved as D-2."
+  },
+  "kind": "mapping",
+  "values": {
+    "band_low.min_mm": 25,
+    "band_low.max_mm": 50,
+    "band_mid.min_mm": 75,
+    "band_mid.max_mm": 100,
+    "band_high.min_mm": 150,
+    "band_high.max_mm": 175
+  }
+}

@@ -508,3 +508,257 @@ def test_interp2d_reproduces_bilinear_functions(a, b, c, r, col):
     grid = a * ROWS[:, None] + b * COLS[None, :] + c
     result = interp2d(r, col, ROWS, COLS, grid, "raise", "r", "c")
     assert result.value == pytest.approx(a * r + b * col + c, rel=1e-9, abs=1e-9)
+
+
+# ===========================================================================
+# M3 section: data/*.json + tables/loader.py
+# ===========================================================================
+
+import json
+from importlib.resources import files
+from pathlib import Path
+
+from concretecalc.tables.loader import list_table_ids, load_grid, load_mapping, load_series
+
+SERIES_IDS = [
+    "wc_vs_strength", "wc_vs_specified_fc", "air_content", "unit_weight", "f_factor", "min_cement_flatwork",
+]
+GRID_IDS = ["mixing_water", "bulk_volume_ca"]
+MAPPING_IDS = [
+    "mixing_water_slump_bands", "shape_reduction", "slump_ranges", "durability", "min_cement_misc",
+    "age_coefficients", "standard_sieves", "required_strength_rules", "flag_thresholds",
+]
+ALL_IDS = SERIES_IDS + GRID_IDS + MAPPING_IDS
+NMAS_AXIS = [9.5, 12.5, 19, 25, 37.5, 50, 75, 150]
+REPO_ROOT = Path(__file__).resolve().parents[1]
+
+
+def load_any(table_id):
+    if table_id in SERIES_IDS:
+        return load_series(table_id)
+    if table_id in GRID_IDS:
+        return load_grid(table_id)
+    return load_mapping(table_id)
+
+
+def test_list_table_ids_matches_the_data_folder():
+    assert set(list_table_ids()) == set(ALL_IDS)
+    assert list(list_table_ids()) == sorted(list_table_ids())
+
+
+@pytest.mark.parametrize("table_id", ALL_IDS)
+def test_every_table_loads_and_cites_a_source(table_id):
+    table = load_any(table_id)
+    assert table.meta.id == table_id
+    assert table.meta.source.strip() != ""
+    assert table.meta.title.strip() != ""
+    # Ground rule 5 / task section 4: stays False until the owner verifies the table.
+    assert table.meta.verified_against_primary is False
+
+
+@pytest.mark.parametrize("table_id", ALL_IDS)
+def test_every_table_appears_in_table_verification_doc(table_id):
+    text = (REPO_ROOT / "docs" / "table_verification.md").read_text(encoding="utf-8")
+    assert f"`{table_id}`" in text
+
+
+@pytest.mark.parametrize("table_id", SERIES_IDS)
+def test_series_tables_reject_the_wrong_loader(table_id):
+    with pytest.raises(ValueError, match="kind"):
+        load_grid(table_id)
+    with pytest.raises(ValueError, match="kind"):
+        load_mapping(table_id)
+
+
+@pytest.mark.parametrize("table_id", GRID_IDS)
+def test_grid_tables_reject_the_wrong_loader(table_id):
+    with pytest.raises(ValueError, match="kind"):
+        load_series(table_id)
+
+
+@pytest.mark.parametrize("table_id", MAPPING_IDS)
+def test_mapping_tables_reject_the_wrong_loader(table_id):
+    with pytest.raises(ValueError, match="kind"):
+        load_series(table_id)
+
+
+def test_unknown_table_raises():
+    with pytest.raises(FileNotFoundError):
+        load_series("no_such_table")
+
+
+def test_loader_is_cached():
+    assert load_series("wc_vs_strength") is load_series("wc_vs_strength")
+    assert load_grid("mixing_water") is load_grid("mixing_water")
+
+
+def test_series_arrays_are_read_only():
+    table = load_series("wc_vs_strength")
+    with pytest.raises(ValueError):
+        table.x[0] = 99.0
+    with pytest.raises(ValueError):
+        table.columns["non_ae"][0] = 99.0
+
+
+def test_grid_arrays_are_read_only():
+    table = load_grid("mixing_water")
+    for array in (table.rows, table.cols, table.variants["non_ae"]):
+        with pytest.raises(ValueError):
+            array[0] = 0.0
+
+
+def test_json_files_are_plain_json_with_envelope():
+    data_dir = files("concretecalc") / "data"
+    for table_id in ALL_IDS:
+        raw = json.loads((data_dir / f"{table_id}.json").read_text(encoding="utf-8"))
+        assert set(raw) - {"meta", "kind"} != set()
+        assert set(raw["meta"]) == {"id", "title", "source", "verified_against_primary", "units", "notes"}
+
+
+# --- full-table checks for the two tables everything depends on --------------
+
+def test_wc_vs_strength_full_table():
+    table = load_series("wc_vs_strength")
+    assert table.x.tolist() == [14, 21, 28, 35, 41, 48]
+    assert table.columns["non_ae"].tolist() == [0.82, 0.68, 0.57, 0.48, 0.41, 0.33]
+    ae = table.columns["ae"]
+    assert ae[:5].tolist() == [0.74, 0.59, 0.48, 0.40, 0.32]
+    assert np.isnan(ae[5])  # null at 48 MPa
+
+
+def test_mixing_water_full_table():
+    table = load_grid("mixing_water")
+    assert table.rows.tolist() == [37.5, 87.5, 162.5]
+    assert table.cols.tolist() == NMAS_AXIS
+    non_ae = table.variants["non_ae"]
+    ae = table.variants["ae"]
+    assert non_ae[0].tolist() == [207, 199, 190, 179, 166, 154, 130, 113]
+    assert non_ae[1].tolist() == [228, 216, 205, 193, 181, 169, 145, 124]
+    assert non_ae[2, :7].tolist() == [243, 228, 216, 202, 190, 178, 160]
+    assert ae[0].tolist() == [181, 175, 168, 160, 150, 142, 122, 107]
+    assert ae[1].tolist() == [202, 193, 184, 175, 165, 157, 133, 119]
+    assert ae[2, :7].tolist() == [216, 205, 197, 184, 174, 166, 154]
+    assert np.isnan(non_ae[2, 7]) and np.isnan(ae[2, 7])
+    # Only those two cells are null.
+    assert int(np.isnan(non_ae).sum()) == 1 and int(np.isnan(ae).sum()) == 1
+
+
+# --- spot values for the remaining tables -------------------------------------
+
+def test_wc_vs_specified_fc_spot_values():
+    table = load_series("wc_vs_specified_fc")
+    assert table.x.tolist() == [17, 21, 24, 28, 31]
+    assert table.columns["non_ae"][0] == 0.67 and table.columns["non_ae"][4] == 0.38
+    assert table.columns["ae"][3] == 0.35 and np.isnan(table.columns["ae"][4])
+
+
+def test_air_content_spot_values():
+    table = load_series("air_content")
+    assert table.x.tolist() == NMAS_AXIS
+    assert table.columns["non_ae"].tolist() == [3, 2.5, 2, 1.5, 1, 0.5, 0.3, 0.2]
+    assert table.columns["ae_mild"][0] == 4.5 and table.columns["ae_mild"][7] == 1.0
+    assert table.columns["ae_moderate"][2] == 5.0 and table.columns["ae_moderate"][4] == 4.5
+    assert table.columns["ae_severe"][2] == 6.0 and table.columns["ae_severe"][3] == 6.0
+
+
+def test_bulk_volume_spot_values():
+    table = load_grid("bulk_volume_ca")
+    assert table.rows.tolist() == NMAS_AXIS
+    assert table.cols.tolist() == [2.40, 2.60, 2.80, 3.00]
+    b = table.variants["b_b0"]
+    assert b[0].tolist() == [0.50, 0.48, 0.46, 0.44]
+    assert b[4, 1] == 0.73  # 37.5 mm, FM 2.6 (used by Example 1)
+    assert b[7].tolist() == [0.87, 0.85, 0.83, 0.81]
+
+
+def test_unit_weight_spot_values():
+    table = load_series("unit_weight")
+    assert table.columns["non_ae"][0] == 2276 and table.columns["ae"][0] == 2187
+    assert table.columns["non_ae"][7] == 2507 and table.columns["ae"][7] == 2441
+
+
+def test_f_factor_values():
+    table = load_series("f_factor")
+    assert table.x.tolist() == [15, 20, 25, 30]
+    assert table.columns["f"].tolist() == [1.16, 1.08, 1.03, 1.00]
+
+
+def test_min_cement_tables():
+    flat = load_series("min_cement_flatwork")
+    assert flat.x.tolist() == [9.5, 12.5, 19, 25, 37.5]
+    assert flat.columns["min_cement_kg_m3"].tolist() == [360, 350, 320, 310, 280]
+    misc = load_mapping("min_cement_misc")
+    assert misc.values == {"severe_exposure": 334.0, "underwater": 385.0}
+
+
+def test_shape_reduction_values():
+    values = load_mapping("shape_reduction").values
+    assert values == {"angular": 0.0, "subangular": 12.0, "gravel_with_crushed": 21.0, "round_gravel": 27.0}
+
+
+def test_slump_ranges_values():
+    values = load_mapping("slump_ranges").values
+    assert values["beams_reinforced_walls.max_mm"] == 100
+    assert values["building_columns.max_mm"] == 100
+    assert values["pavements_slabs.max_mm"] == 75
+    assert values["mass_concrete.hand_consolidation_extra_mm"] == 25
+    mins = [v for k, v in values.items() if k.endswith(".min_mm")]
+    assert len(mins) == 6 and set(mins) == {25.0}
+
+
+def test_durability_values():
+    values = load_mapping("durability").values
+    assert values["low_permeability.max_wc"] == 0.50 and values["low_permeability.min_fc_psi"] == 4000
+    assert values["freeze_thaw_moist.max_wc"] == 0.45 and values["freeze_thaw_moist.min_fc_psi"] == 4500
+    assert values["corrosion_protection.max_wc"] == 0.40 and values["corrosion_protection.min_fc_psi"] == 5000
+    assert values["full_hydration.min_wc_lower"] == 0.22 and values["full_hydration.min_wc_upper"] == 0.25
+
+
+def test_age_coefficients_values():
+    values = load_mapping("age_coefficients").values
+    assert (values["moist.type_I.a_days"], values["moist.type_I.b"]) == (4.0, 0.85)
+    assert (values["moist.type_III.a_days"], values["moist.type_III.b"]) == (2.3, 0.92)
+    assert (values["steam.type_I.a_days"], values["steam.type_I.b"]) == (1.0, 0.95)
+    assert (values["steam.type_III.a_days"], values["steam.type_III.b"]) == (0.7, 0.98)
+    assert "ACI 209R-92" in load_mapping("age_coefficients").meta.source
+
+
+def test_standard_sieves_and_bands():
+    sieves = load_mapping("standard_sieves").values
+    assert sorted(sieves.values()) == NMAS_AXIS
+    bands = load_mapping("mixing_water_slump_bands").values
+    # Midpoints of the bands must equal the mixing-water row axis.
+    midpoints = [
+        (bands["band_low.min_mm"] + bands["band_low.max_mm"]) / 2,
+        (bands["band_mid.min_mm"] + bands["band_mid.max_mm"]) / 2,
+        (bands["band_high.min_mm"] + bands["band_high.max_mm"]) / 2,
+    ]
+    assert midpoints == load_grid("mixing_water").rows.tolist()
+
+
+def test_required_strength_rules_values():
+    values = load_mapping("required_strength_rules").values
+    assert values["statistical.coef_134"] == 1.34
+    assert values["statistical.coef_233"] == 2.33
+    assert values["statistical.offset_233_mpa"] == 3.45
+    assert (values["no_data.margin_low_mpa"], values["no_data.margin_mid_mpa"], values["no_data.margin_high_mpa"]) == (7.0, 8.5, 10.0)
+    assert values["no_data.low_band_below_mpa"] == 21 and values["no_data.mid_band_up_to_mpa"] == 35
+    assert values["f_factor.min_n"] == 15
+
+
+def test_flag_thresholds_spot_values():
+    values = load_mapping("flag_thresholds").values
+    assert values["volume_closure.warning_m3"] == 0.02 and values["volume_closure.error_m3"] == 0.05
+    assert values["model_spread_mpa"] == 5
+    assert values["slide_rule.air_entrainer_ml_per_pct_per_100kg"] == 6.3
+    assert values["soft.cement_kg_m3.min"] == 150 and values["soft.cement_kg_m3.max"] == 700
+    assert values["hard.mc_pct.max"] == 30
+    # Every soft/hard key comes as a min/max pair (except the single hard age minimum).
+    for key in values:
+        if key.startswith("soft.") and key.endswith(".min"):
+            assert key[:-4] + ".max" in values
+
+
+def test_mapping_values_are_python_floats():
+    for value in load_mapping("shape_reduction").values.values():
+        assert type(value) is float

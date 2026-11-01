@@ -1,0 +1,19 @@
+{
+  "meta": {
+    "id": "shape_reduction",
+    "title": "Mixing-water reduction by coarse-aggregate shape (subtract from angular values)",
+    "source": "CIE308 Ch4 Part B slides (Dr. M. Tawk), after ACI 211.1; verify against ACI 211.1-91 and PCA Design and Control of Concrete Mixtures",
+    "verified_against_primary": false,
+    "units": {
+      "values": "kg/m3"
+    },
+    "notes": "Primary source to be confirmed (OPEN_QUESTIONS Q32)."
+  },
+  "kind": "mapping",
+  "values": {
+    "angular": 0,
+    "subangular": 12,
+    "gravel_with_crushed": 21,
+    "round_gravel": 27
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "id": "mixing_water",
+    "title": "Approximate mixing water, angular aggregate",
+    "source": "CIE308 Ch4 Part B slides (Dr. M. Tawk), after ACI 211.1; verify against ACI 211.1-91 and PCA Design and Control of Concrete Mixtures",
+    "verified_against_primary": false,
+    "units": {
+      "rows": "mm (slump band midpoint)",
+      "cols": "mm (NMAS)",
+      "non_ae": "kg/m3",
+      "ae": "kg/m3"
+    },
+    "notes": "Rows are the midpoints of the slump bands 25-50 mm (37.5), 75-100 mm (87.5), 150-175 mm (162.5); band edges are in mixing_water_slump_bands. Values are for angular aggregate; subtract shape_reduction. No value at 150 mm NMAS for 150-175 mm slump."
+  },
+  "kind": "grid2d",
+  "rows": [37.5, 87.5, 162.5],
+  "cols": [9.5, 12.5, 19, 25, 37.5, 50, 75, 150],
+  "variants": {
+    "non_ae": [
+      [207, 199, 190, 179, 166, 154, 130, 113],
+      [228, 216, 205, 193, 181, 169, 145, 124],
+      [243, 228, 216, 202, 190, 178, 160, null]
+    ],
+    "ae": [
+      [181, 175, 168, 160, 150, 142, 122, 107],
+      [202, 193, 184, 175, 165, 157, 133, 119],
+      [216, 205, 197, 184, 174, 166, 154, null]
+    ]
+  }
+}

@@ -14,6 +14,8 @@ Every choice not dictated by the task text. Each one is a default the owner can 
 - **A-03** Labelled multi-value tables (slump ranges, durability, age coefficients, min cement) are stored as `mapping` with dotted keys, e.g. `"beams_reinforced_walls.max_mm"`. The +25 mm hand-consolidation allowance is stored as `"mass_concrete.hand_consolidation_extra_mm"`.
 - **A-04** Unit-conversion factors are exact definitions, not empirical reference data, so they are module constants in `units.py` (values from task section 8).
 - **A-05** `min_cement_flatwork_kg_m3` interpolates linearly between listed NMAS values. Above 37.5 mm (no data) it returns UNAVAILABLE and Mode A applies no flatwork minimum, with a flag (Q19).
+- **A-39** Band edges of the mixing-water table are stored in `mixing_water_slump_bands.json` (needed for the D-2 band option); soft/hard input limits of task section 5 are stored in `flag_thresholds.json` (D-1). Ranges that can be read from a table axis (strength 14-48 MPa, FM 2.40-3.00) are taken from the table, not duplicated.
+- **A-40** `interp1d` drops a pair when either xs or ys is NaN (the PLAN wording said ys only); needed for table inversion, identical otherwise.
 - **A-24** `TableMeta.units` is a `dict[str, str]` and `notes` is a single string.
 - **A-38** `Status` member values are lowercase strings ("ok", "clamped", ...).
 - **A-23** Enumerations are `typing.Literal` string types validated at runtime, not Enum classes (simpler for the owner). `Status` stays an Enum as the task specifies.

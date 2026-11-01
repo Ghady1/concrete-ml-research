@@ -1,0 +1,18 @@
+{
+  "meta": {
+    "id": "f_factor",
+    "title": "Modification factor F for standard deviation by number of tests n",
+    "source": "CIE308 Ch4 Part B slides (Dr. M. Tawk), after ACI 211.1; verify against ACI 211.1-91 and PCA Design and Control of Concrete Mixtures",
+    "verified_against_primary": false,
+    "units": {
+      "x": "- (number of test results n)",
+      "f": "-"
+    },
+    "notes": "Linear interpolation between listed n; F = 1.00 for n >= 30; n < 15 -> standard deviation treated as unknown."
+  },
+  "kind": "series",
+  "x": [15, 20, 25, 30],
+  "series": {
+    "f": [1.16, 1.08, 1.03, 1.0]
+  }
+}

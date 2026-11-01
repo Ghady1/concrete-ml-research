@@ -1,0 +1,20 @@
+{
+  "meta": {
+    "id": "unit_weight",
+    "title": "First estimate of fresh concrete unit weight",
+    "source": "CIE308 Ch4 Part B slides (Dr. M. Tawk), after ACI 211.1; verify against ACI 211.1-91 and PCA Design and Control of Concrete Mixtures",
+    "verified_against_primary": false,
+    "units": {
+      "x": "mm (NMAS)",
+      "non_ae": "kg/m3",
+      "ae": "kg/m3"
+    },
+    "notes": "Values appear to be converted from lb/yd3; verify against the ACI 211.1 SI table (OPEN_QUESTIONS Q18)."
+  },
+  "kind": "series",
+  "x": [9.5, 12.5, 19, 25, 37.5, 50, 75, 150],
+  "series": {
+    "non_ae": [2276, 2305, 2347, 2376, 2412, 2441, 2465, 2507],
+    "ae": [2187, 2228, 2276, 2311, 2347, 2370, 2394, 2441]
+  }
+}

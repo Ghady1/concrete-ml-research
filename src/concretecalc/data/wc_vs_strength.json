@@ -1,0 +1,20 @@
+{
+  "meta": {
+    "id": "wc_vs_strength",
+    "title": "Water-cement ratio vs required average compressive strength f'cr at 28 days",
+    "source": "CIE308 Ch4 Part B slides (Dr. M. Tawk), after ACI 211.1; verify against ACI 211.1-91 and PCA Design and Control of Concrete Mixtures",
+    "verified_against_primary": false,
+    "units": {
+      "x": "MPa (f'cr, required average = mean strength)",
+      "non_ae": "w/c (-)",
+      "ae": "w/c (-)"
+    },
+    "notes": "Moist cured, 19-25 mm aggregate. x stored ascending. AE has no value at 48 MPa. Strength labels look like rounded psi conversions (OPEN_QUESTIONS Q17)."
+  },
+  "kind": "series",
+  "x": [14, 21, 28, 35, 41, 48],
+  "series": {
+    "non_ae": [0.82, 0.68, 0.57, 0.48, 0.41, 0.33],
+    "ae": [0.74, 0.59, 0.48, 0.4, 0.32, null]
+  }
+}
