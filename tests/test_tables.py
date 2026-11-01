@@ -825,3 +825,303 @@ def test_flag_thresholds_spot_values():
 def test_mapping_values_are_python_floats():
     for value in load_mapping("shape_reduction").values.values():
         assert type(value) is float
+
+
+# ===========================================================================
+# M4 section: tables/lookups.py
+# ===========================================================================
+
+from concretecalc.tables import lookups
+
+
+# --- w/c tables ----------------------------------------------------------------
+
+def test_wc_for_strength_nodes_and_midpoint():
+    assert lookups.wc_for_strength(28.0, air_entrained=False).value == pytest.approx(0.57, abs=1e-12)
+    assert lookups.wc_for_strength(28.0, air_entrained=True).value == pytest.approx(0.48, abs=1e-12)
+    result = lookups.wc_for_strength(31.5, air_entrained=False)
+    assert result.value == pytest.approx(0.525, abs=1e-12)
+    assert result.status is Status.OK
+
+
+def test_wc_for_strength_ae_48_is_dropped_so_45_is_extrapolated():
+    result = lookups.wc_for_strength(45.0, air_entrained=True)
+    assert result.status is Status.EXTRAPOLATED
+    assert result.value == pytest.approx(0.32 - 4 * (0.08 / 6), abs=1e-12)
+    # Same strength without air entrainment is inside the table.
+    assert lookups.wc_for_strength(45.0, air_entrained=False).status is Status.OK
+
+
+def test_wc_for_strength_policies():
+    assert lookups.wc_for_strength(60.0, False, policy="clamp").value == pytest.approx(0.33, abs=1e-12)
+    with pytest.raises(OutOfRangeError):
+        lookups.wc_for_strength(60.0, False, policy="raise")
+
+
+@pytest.mark.parametrize("air_entrained", [False, True])
+@pytest.mark.parametrize("fcr_mpa", [14.0, 17.3, 21.0, 24.1, 28.0, 33.3, 35.0, 40.0, 41.0])
+def test_strength_for_wc_inverts_wc_for_strength(air_entrained, fcr_mpa):
+    wc = lookups.wc_for_strength(fcr_mpa, air_entrained).value
+    back = lookups.strength_for_wc(wc, air_entrained)
+    assert back.value == pytest.approx(fcr_mpa, abs=1e-9)
+    assert back.status is Status.OK
+
+
+def test_strength_for_wc_out_of_range_is_extrapolated():
+    result = lookups.strength_for_wc(0.90, air_entrained=False)
+    assert result.status is Status.EXTRAPOLATED
+    # Last segment (0.68 -> 21, 0.82 -> 14): slope -50 MPa per unit w/c -> 14 - 0.08*50 = 10
+    assert result.value == pytest.approx(10.0, abs=1e-9)
+
+
+def test_wc_for_specified_fc():
+    assert lookups.wc_for_specified_fc(24.0, False).value == pytest.approx(0.51, abs=1e-12)
+    assert lookups.wc_for_specified_fc(24.0, True).value == pytest.approx(0.40, abs=1e-12)
+    assert lookups.wc_for_specified_fc(31.0, True).status is Status.EXTRAPOLATED  # AE null at 31
+
+
+# --- mixing water ----------------------------------------------------------------
+
+def test_mixing_water_task_examples():
+    # Required by the task (M4): (87.5 mm, 19 mm, non-AE, angular) = 205; (87.5, 22 mm) = 199.
+    assert lookups.mixing_water_kg_m3(87.5, 19.0, False, "angular").value == pytest.approx(205.0, abs=1e-12)
+    result = lookups.mixing_water_kg_m3(87.5, 22.0, False, "angular")
+    assert result.value == pytest.approx(199.0, abs=1e-12)
+    assert result.status is Status.OK
+
+
+@pytest.mark.parametrize(
+    "shape, reduction",
+    [("angular", 0), ("subangular", 12), ("gravel_with_crushed", 21), ("round_gravel", 27)],
+)
+def test_mixing_water_shape_reduction(shape, reduction):
+    result = lookups.mixing_water_kg_m3(87.5, 19.0, False, shape)
+    assert result.value == pytest.approx(205.0 - reduction, abs=1e-12)
+
+
+def test_mixing_water_air_entrained():
+    assert lookups.mixing_water_kg_m3(87.5, 19.0, True, "angular").value == pytest.approx(184.0, abs=1e-12)
+    assert lookups.mixing_water_kg_m3(37.5, 25.0, True, "round_gravel").value == pytest.approx(160.0 - 27.0, abs=1e-12)
+
+
+def test_mixing_water_null_cell_is_unavailable():
+    result = lookups.mixing_water_kg_m3(162.5, 150.0, False, "angular")
+    assert result.value is None
+    assert result.status is Status.UNAVAILABLE
+    assert lookups.mixing_water_kg_m3(125.0, 100.0, True, "angular").status is Status.UNAVAILABLE
+    # Neighbour of the null on the same row is fine.
+    assert lookups.mixing_water_kg_m3(162.5, 75.0, False, "angular").value == pytest.approx(160.0, abs=1e-12)
+
+
+def test_mixing_water_interpolates_between_midpoints():
+    # 75 mm with pure midpoint interpolation: 190 + 0.75 * (205 - 190) = 201.25 (OPEN_QUESTIONS Q26)
+    result = lookups.mixing_water_kg_m3(75.0, 19.0, False, "angular")
+    assert result.value == pytest.approx(201.25, abs=1e-12)
+
+
+def test_mixing_water_default_policy_is_clamp():
+    result = lookups.mixing_water_kg_m3(200.0, 19.0, False, "angular")
+    assert result.status is Status.CLAMPED
+    assert result.value == pytest.approx(216.0, abs=1e-12)
+
+
+# Band reading (D-2): inside a band -> that row; between bands -> linear between band edges.
+@pytest.mark.parametrize(
+    "slump_mm, expected",
+    [
+        (25.0, 190.0), (37.5, 190.0), (50.0, 190.0),       # low band
+        (60.0, 190.0 + 0.4 * 15.0),                          # between 50 and 75: t = 10/25
+        (75.0, 205.0), (87.5, 205.0), (100.0, 205.0),        # mid band
+        (120.0, 205.0 + 0.4 * 11.0),                         # between 100 and 150: t = 20/50
+        (150.0, 216.0), (175.0, 216.0),                      # high band
+    ],
+)
+def test_mixing_water_band_reading(slump_mm, expected):
+    result = lookups.mixing_water_kg_m3(slump_mm, 19.0, False, "angular", slump_lookup="band")
+    assert result.value == pytest.approx(expected, abs=1e-12)
+    assert result.status is Status.OK
+
+
+def test_mixing_water_band_reading_outside_bands():
+    below = lookups.mixing_water_kg_m3(10.0, 19.0, False, "angular", slump_lookup="band")
+    assert below.status is Status.CLAMPED and below.value == pytest.approx(190.0, abs=1e-12)
+    above = lookups.mixing_water_kg_m3(200.0, 19.0, False, "angular", slump_lookup="band", policy="extrapolate")
+    # Band reading never extrapolates a band; it uses the end row and says so.
+    assert above.status is Status.CLAMPED and above.value == pytest.approx(216.0, abs=1e-12)
+    with pytest.raises(OutOfRangeError):
+        lookups.mixing_water_kg_m3(10.0, 19.0, False, "angular", slump_lookup="band", policy="raise")
+
+
+def test_mixing_water_band_reading_null_row_is_unavailable():
+    assert lookups.mixing_water_kg_m3(160.0, 150.0, False, "angular", slump_lookup="band").status is Status.UNAVAILABLE
+    # Between bands next to the null row also needs it.
+    assert lookups.mixing_water_kg_m3(120.0, 150.0, False, "angular", slump_lookup="band").status is Status.UNAVAILABLE
+    assert lookups.mixing_water_kg_m3(90.0, 150.0, False, "angular", slump_lookup="band").value == pytest.approx(124.0, abs=1e-12)
+
+
+def test_mixing_water_band_reading_off_node_nmas():
+    result = lookups.mixing_water_kg_m3(75.0, 22.0, False, "angular", slump_lookup="band")
+    assert result.value == pytest.approx(199.0, abs=1e-12)
+
+
+def test_mixing_water_rejects_unknown_options():
+    with pytest.raises(ValueError):
+        lookups.mixing_water_kg_m3(75.0, 19.0, False, "angular", slump_lookup="nearest")
+    with pytest.raises(ValueError):
+        lookups.mixing_water_kg_m3(75.0, 19.0, False, "crushed")
+
+
+# --- slump from water (inverse) ----------------------------------------------------
+
+@pytest.mark.parametrize("air_entrained", [False, True])
+@pytest.mark.parametrize("nmas_mm", [9.5, 19.0, 22.0, 37.5, 75.0])
+@pytest.mark.parametrize("shape", ["angular", "round_gravel"])
+@pytest.mark.parametrize("slump_mm", [37.5, 87.5, 162.5])
+def test_slump_for_water_inverts_mixing_water_at_midpoints(air_entrained, nmas_mm, shape, slump_mm):
+    water = lookups.mixing_water_kg_m3(slump_mm, nmas_mm, air_entrained, shape).value
+    result = lookups.slump_for_water_mm(water, nmas_mm, air_entrained, shape)
+    assert result.value == pytest.approx(slump_mm, abs=1e-9)
+    assert result.status is Status.OK
+
+
+@given(slump_mm=st.floats(37.5, 162.5), nmas_mm=st.floats(9.5, 75.0))
+def test_slump_for_water_round_trip_inside_table(slump_mm, nmas_mm):
+    water = lookups.mixing_water_kg_m3(slump_mm, nmas_mm, False, "subangular").value
+    back = lookups.slump_for_water_mm(water, nmas_mm, False, "subangular")
+    assert back.value == pytest.approx(slump_mm, abs=1e-9)
+
+
+def test_slump_for_water_150mm_uses_two_rows():
+    result = lookups.slump_for_water_mm(124.0, 150.0, False, "angular")
+    assert result.value == pytest.approx(87.5, abs=1e-12)
+    assert any("150-175" in w or "162.5" in w for w in result.warnings)
+    beyond = lookups.slump_for_water_mm(130.0, 150.0, False, "angular")
+    assert beyond.status is Status.EXTRAPOLATED
+    assert beyond.value == pytest.approx(87.5 + 6.0 * 50.0 / 11.0, abs=1e-9)
+
+
+def test_slump_for_water_extrapolates_by_default():
+    result = lookups.slump_for_water_mm(170.0, 19.0, False, "angular")
+    assert result.status is Status.EXTRAPOLATED
+    # First segment: 190 -> 37.5, 205 -> 87.5 ; 20 kg/m3 below 190 -> 37.5 - 20 * 50/15
+    assert result.value == pytest.approx(37.5 - 20.0 * 50.0 / 15.0, abs=1e-9)
+
+
+# --- other tables -------------------------------------------------------------------
+
+def test_shape_reduction_lookup():
+    assert lookups.shape_reduction_kg_m3("gravel_with_crushed").value == 21.0
+    with pytest.raises(ValueError):
+        lookups.shape_reduction_kg_m3("crushed")
+
+
+def test_air_content():
+    assert lookups.air_content_pct(19.0, "moderate", True).value == pytest.approx(5.0, abs=1e-12)
+    assert lookups.air_content_pct(37.5, "severe", True).value == pytest.approx(5.5, abs=1e-12)
+    assert lookups.air_content_pct(19.0, None, False).value == pytest.approx(2.0, abs=1e-12)
+    # Exposure is ignored for non-AE concrete (entrapped air only).
+    assert lookups.air_content_pct(19.0, "severe", False).value == pytest.approx(2.0, abs=1e-12)
+    assert lookups.air_content_pct(22.0, None, False).value == pytest.approx(1.75, abs=1e-12)
+    clamped = lookups.air_content_pct(200.0, "mild", True)
+    assert clamped.status is Status.CLAMPED and clamped.value == pytest.approx(1.0, abs=1e-12)
+
+
+def test_air_content_needs_exposure_when_air_entrained():
+    with pytest.raises(ValueError, match="exposure"):
+        lookups.air_content_pct(19.0, None, True)
+    with pytest.raises(ValueError):
+        lookups.air_content_pct(19.0, "extreme", True)
+
+
+def test_bulk_volume_ratio():
+    assert lookups.bulk_volume_ratio(37.5, 2.6).value == pytest.approx(0.73, abs=1e-12)
+    assert lookups.bulk_volume_ratio(19.0, 2.7).value == pytest.approx(0.63, abs=1e-12)
+    extrapolated = lookups.bulk_volume_ratio(19.0, 3.2)
+    assert extrapolated.status is Status.EXTRAPOLATED
+    assert extrapolated.value == pytest.approx(0.58, abs=1e-12)
+
+
+def test_fresh_unit_weight():
+    assert lookups.fresh_unit_weight_kg_m3(19.0, True).value == pytest.approx(2276.0, abs=1e-12)
+    assert lookups.fresh_unit_weight_kg_m3(22.0, False).value == pytest.approx(2361.5, abs=1e-12)
+
+
+def test_slump_limits():
+    low, high = lookups.slump_limits_mm("beams_reinforced_walls")
+    assert (low.value, high.value) == (25.0, 100.0)
+    low, high = lookups.slump_limits_mm("pavements_slabs")
+    assert (low.value, high.value) == (25.0, 75.0)
+    with pytest.raises(ValueError):
+        lookups.slump_limits_mm("bridge_pier")
+
+
+def test_hand_consolidation_allowance():
+    assert lookups.hand_consolidation_extra_mm().value == 25.0
+
+
+@pytest.mark.parametrize("n, expected", [(15, 1.16), (17, 1.128), (20, 1.08), (25, 1.03), (30, 1.00), (45, 1.00)])
+def test_f_factor(n, expected):
+    result = lookups.f_factor(n)
+    assert result.value == pytest.approx(expected, abs=1e-12)
+    assert result.status is Status.OK  # F = 1.00 for n >= 30 is the rule, not a clamp
+
+
+def test_f_factor_below_15_is_unavailable():
+    result = lookups.f_factor(14)
+    assert result.value is None and result.status is Status.UNAVAILABLE
+    assert "unknown" in result.warnings[0]
+    with pytest.raises(ValueError):
+        lookups.f_factor(-1)
+
+
+def test_durability():
+    assert lookups.max_wc_durability("freeze_thaw_moist").value == pytest.approx(0.45, abs=1e-12)
+    none_class = lookups.max_wc_durability("none")
+    assert none_class.value is None and none_class.status is Status.OK
+    assert lookups.min_fc_durability_mpa("freeze_thaw_moist").value == pytest.approx(31.026407805, abs=1e-9)
+    assert lookups.min_fc_durability_mpa("low_permeability").value == pytest.approx(27.57902916, abs=1e-8)
+    assert lookups.min_fc_durability_mpa("none").value is None
+    with pytest.raises(ValueError):
+        lookups.max_wc_durability("marine")
+
+
+def test_full_hydration_limits():
+    low, high = lookups.full_hydration_wc_limits()
+    assert (low.value, high.value) == (0.22, 0.25)
+
+
+def test_min_cement_flatwork():
+    assert lookups.min_cement_flatwork_kg_m3(19.0).value == pytest.approx(320.0, abs=1e-12)
+    assert lookups.min_cement_flatwork_kg_m3(22.0).value == pytest.approx(315.0, abs=1e-12)
+    above = lookups.min_cement_flatwork_kg_m3(50.0)
+    assert above.value is None and above.status is Status.UNAVAILABLE
+
+
+def test_min_cement_misc():
+    assert lookups.min_cement_misc_kg_m3("severe_exposure").value == 334.0
+    assert lookups.min_cement_misc_kg_m3("underwater").value == 385.0
+    with pytest.raises(ValueError):
+        lookups.min_cement_misc_kg_m3("marine")
+
+
+def test_standard_sieves():
+    assert lookups.standard_sieves_mm() == (9.5, 12.5, 19.0, 25.0, 37.5, 50.0, 75.0, 150.0)
+    assert lookups.is_standard_nmas(19.0) is True
+    assert lookups.is_standard_nmas(22.0) is False
+
+
+def test_threshold_lookup():
+    assert lookups.threshold("model_spread_mpa") == 5.0
+    with pytest.raises(KeyError):
+        lookups.threshold("no_such_threshold")
+
+
+def test_required_strength_rule_lookup():
+    assert lookups.required_strength_rule("statistical.coef_233") == 2.33
+    with pytest.raises(KeyError):
+        lookups.required_strength_rule("nope")
+
+
+def test_table_ranges_come_from_the_tables():
+    assert lookups.strength_table_range_mpa() == (14.0, 48.0)
+    assert lookups.fm_table_range() == (2.40, 3.00)
