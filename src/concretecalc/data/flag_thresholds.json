@@ -7,7 +7,7 @@
     "units": {
       "values": "unit given by the key suffix (_m3, _pct, _mpa, _mm, _kg_m3, _days, _ml...); no suffix = dimensionless"
     },
-    "notes": "Thresholds (volume_closure, unit_weight, bulk_ratio, model_spread, slump_estimate.band) are PROJECT PLACEHOLDERS (ASSUMPTIONS A-10, OPEN_QUESTIONS Q15). Input limits come from the project task section 5. slide_rule.* and trial_batch.* are CIE308 slide rules (OPEN_QUESTIONS Q13). Approved as D-1."
+    "notes": "Thresholds (volume_closure, unit_weight, bulk_ratio, model_spread, slump_estimate.band) are PROJECT PLACEHOLDERS (ASSUMPTIONS A-10, OPEN_QUESTIONS Q15). Input limits come from the project task section 5. slide_rule.* and trial_batch.* are CIE308 slide rules (OPEN_QUESTIONS Q13). Approved as D-1. Geometric maximum-size factors are task section 7 step 2 rules; not empirical thresholds."
   },
   "kind": "mapping",
   "values": {
@@ -61,6 +61,10 @@
     "hard.absorption_pct.max": 20,
     "hard.mc_pct.min": 0,
     "hard.mc_pct.max": 30,
-    "hard.age_days.min": 1
+    "hard.age_days.min": 1,
+    "geometry.form_factor": 0.2,
+    "geometry.rebar_spacing_factor": 0.75,
+    "geometry.cover_factor": 0.75,
+    "geometry.slab_factor": 0.3333333333333333
   }
 }

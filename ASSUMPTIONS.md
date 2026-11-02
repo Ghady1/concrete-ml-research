@@ -47,6 +47,7 @@ Every choice not dictated by the task text. Each one is a default the owner can 
 - **A-12** Inverse required strength, sigma unknown: in either gap ([28, 29.5) or (43.5, 45]) take the lower of the two adjacent-band candidates + flag (Q21).
 
 ## Mode A
+- **A-48** Geometric maximum-size factors from original task section 7 are stored in the existing numeric-rules JSON (`flag_thresholds`) rather than code. `design_mix` propagates policy through private helpers, retaining approved step signatures. A nonpositive remaining fine volume raises; a below-table geometric size returns the specified fallback plus an error flag. The weight-method difference is weight-method FA minus volume-method FA.
 - **A-19** Water reducer: mixing water x (1 - water_reducer_pct/100).
 - **A-20** Moisture conventions in Mode A: course (slides) applies the slide formulas to CA_dry and FA_ssd as they come out of steps 6-7. Strict uses CA_ssd = CA_dry(1+Abs/100) and FA_ssd. Both are always computed and reported (Q25).
 - **A-27** Fine aggregate by absolute volume on the SSD basis (SSD mass with SSD SG). The weight method is reported alongside for comparison. (Required by the task to be logged.)

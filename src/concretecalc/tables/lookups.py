@@ -63,6 +63,13 @@ def strength_table_points(air_entrained: bool) -> tuple[tuple[float, float], ...
     return tuple((float(wc), float(strength)) for wc, strength in zip(column, table.x) if math.isfinite(wc))
 
 
+def mode_a_rules() -> dict[str, float]:
+    """Geometric factors and hand-consolidation allowance from task section 7."""
+    values = dict(load_mapping('flag_thresholds').values)
+    values['hand_consolidation_extra_mm'] = load_mapping('slump_ranges').values['mass_concrete.hand_consolidation_extra_mm']
+    return values
+
+
 def required_strength_rules() -> dict[str, float]:
     """Return a copy of the course required-average-strength rules (PLAN M08)."""
     return dict(load_mapping('required_strength_rules').values)
