@@ -61,4 +61,5 @@ Every choice not dictated by the task text. Each one is a default the owner can 
 - **A-21** `created_utc` is supplied by the caller (UI/store boundary) so that fit functions stay pure.
 
 ## Tests / files
+- **A-50** UI exports remain explicitly SI-labelled even when viewing US units. Actual-batch entries convert kg/lb and m3/yd3; per-volume contents convert kg/m3 and lb/yd3. Missing adapter keys use SI defaults; only explicitly supplied display-unit values are converted. Numeric widget values are converted on unit-system changes. The sidebar moisture convention applies to Mode A; Mode B uses the explicit aggregate basis.
 - **A-16** Slump tests go in a new `tests/test_slump.py` (not in the task's allowed list; D-6).
