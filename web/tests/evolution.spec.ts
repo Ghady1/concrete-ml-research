@@ -88,6 +88,32 @@ test('Mix Explorer isolates hypothetical inputs and adopts only on request', asy
   await expect(page.getByRole('status')).toContainText('Inputs changed');
 });
 
+test('age exploration plots age-adjusted strengths and preserves the baseline', async ({ page }) => {
+  await page.goto('/#evaluate');
+  const baselineResponse = page.waitForResponse(response => response.url().endsWith('/api/v1/predict'));
+  await page.getByRole('button', { name: 'Run analysis', exact: true }).click();
+  const baseline = (await (await baselineResponse).json()).report;
+  await page.getByRole('button', { name: 'Open Mix Explorer' }).click();
+  const explorer = page.locator('.mix-explorer');
+  await explorer.getByRole('button', { name: /Explore a parameter/ }).click();
+  await page.getByRole('option', { name: 'Test age (days)', exact: true }).click();
+  const changedResponse = page.waitForResponse(response => response.url().endsWith('/api/v1/predict') && response.request().postDataJSON().inputs.age_days === 7);
+  await explorer.getByRole('textbox', { name: 'Test age (days)', exact: true }).fill('7');
+  const changed = (await (await changedResponse).json()).report;
+  const chart = explorer.locator('figure').filter({ has: page.getByRole('heading', { name: 'Baseline and hypothetical strength', exact: true }) });
+  await expect(chart.getByText(/Age-adjusted estimates in MPa: baseline at 28 days versus hypothetical at 7 days/)).toBeVisible();
+  await chart.getByText('View numerical data', { exact: true }).click();
+  for (const model of ['aci_table', 'abrams', 'bolomey', 'feret']) {
+    const cells = chart.getByRole('row').filter({ has: page.getByRole('cell', { name: model, exact: true }) }).getByRole('cell');
+    expect(Number((await cells.nth(1).innerText()).replaceAll(',', ''))).toBeCloseTo(baseline.age_adjusted[model].strength_mpa, 4);
+    expect(Number((await cells.nth(2).innerText()).replaceAll(',', ''))).toBeCloseTo(changed.age_adjusted[model].strength_mpa, 4);
+    expect(changed.age_adjusted[model].strength_mpa).toBeLessThan(baseline.age_adjusted[model].strength_mpa);
+    expect(changed.predictions[model].mean_28d_mpa).toBe(baseline.predictions[model].mean_28d_mpa);
+  }
+  const bars = chart.locator('.recharts-bar-rectangles');
+  expect((await bars.nth(0).boundingBox())!.height).toBeGreaterThan((await bars.nth(1).boundingBox())!.height);
+});
+
 test('notebook renames duplicates undoes removals and imports recorded versions', async ({ page }) => {
   await page.goto('/#evaluate');
   await page.getByRole('button', { name: 'Run analysis', exact: true }).click();

@@ -23,3 +23,12 @@ Hand exercises:
 1. At 315 kg/m3 cement, compare w/c=200/315 and 215/315.
 2. Add 15 kg/m3 water without changing aggregates: volume rises .015 m3/m3.
 3. Change age alone: base means stay fixed; selected-age estimates change.
+
+## Age-chart correction
+
+When exploring age, the comparison chart now uses each report's existing
+age_adjusted strength rather than the unchanged 28-day reference mean. Legends
+and exported plot data identify baseline/hypothetical ages. Water/cement
+exploration continues to compare 28-day means. No engine equation changed.
+The age regression checks all four plotted model values against the API and
+checks that baseline/hypothetical bar heights differ for 28 versus 7 days.
