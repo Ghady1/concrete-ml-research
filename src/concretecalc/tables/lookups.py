@@ -42,6 +42,11 @@ def input_validation_limits() -> dict[str, float]:
     return limits
 
 
+def required_strength_rules() -> dict[str, float]:
+    """Return a copy of the course required-average-strength rules (PLAN M08)."""
+    return dict(load_mapping('required_strength_rules').values)
+
+
 # ---------------------------------------------------------------------------
 # Small helpers
 # ---------------------------------------------------------------------------
