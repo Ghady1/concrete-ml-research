@@ -1,7 +1,7 @@
 # PLAN.md - `concretecalc` build plan (Phase 1, awaiting owner approval)
 
 Status: approved (owner decisions 2026-11-01). M01-M04 delivered by Claude Code;
-M05-M13 delivered (636 tests passing on Python 3.12). Owner authorized continued implementation and
+M05-M14 delivered (646 tests passing on Python 3.12, including Excel). Owner authorized continued implementation and
 a push after each completed milestone on 2026-11-02.
 Read together with CLAUDE.md (ground rules), ASSUMPTIONS.md (A-numbers) and OPEN_QUESTIONS.md (Q-numbers).
 

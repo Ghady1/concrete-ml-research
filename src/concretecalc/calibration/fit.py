@@ -15,6 +15,15 @@ class FitResult:
     rmse_mpa: float
 
 
+@dataclass(frozen=True, eq=False)
+class FitArrays:
+    """Matching fitting arrays corrected to 28-day cylinder strength, MPa."""
+    wc: np.ndarray
+    cw: np.ndarray
+    volume_ratio: np.ndarray
+    strength_mpa: np.ndarray
+
+
 def _arrays(x: np.ndarray, strength_mpa: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     x = np.asarray(x, dtype=float)
     strength_mpa = np.asarray(strength_mpa, dtype=float)
@@ -73,3 +82,16 @@ def fit_feret(volume_ratio: np.ndarray, strength_mpa: np.ndarray) -> FitResult:
     g = volume_ratio**2
     k = float(np.dot(strength_mpa, g) / np.dot(g, g))
     return _result('feret', {'K': k}, strength_mpa, k*g)
+
+
+def fit_all(arrays: FitArrays) -> dict[str, FitResult]:
+    """Fit all parametric models to the same >=3 corrected observations."""
+    return {'abrams':fit_abrams(arrays.wc,arrays.strength_mpa),
+        'bolomey':fit_bolomey(arrays.cw,arrays.strength_mpa),
+        'feret':fit_feret(arrays.volume_ratio,arrays.strength_mpa)}
+
+
+def comparison_table(results: dict[str, FitResult]) -> tuple[tuple[str,int,float,float,float], ...]:
+    """(Model,n,R2 in stated space,R2 MPa,RMSE MPa), retaining input order."""
+    return tuple((name,result.n_rows,result.r2,result.r2_mpa,result.rmse_mpa)
+                 for name,result in results.items())
