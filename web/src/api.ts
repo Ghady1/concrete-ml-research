@@ -13,9 +13,9 @@ export type Fit = components['schemas']['FitResponse'];
 export class ApiError extends Error {
   constructor(message: string, public fields: { path: string; message: string }[] = []) { super(message); }
 }
-export async function request<T>(path: string, body?: unknown): Promise<T> {
-  const response = await fetch('/api/v1' + path, body === undefined ? undefined : {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+export async function request<T>(path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
+  const response = await fetch('/api/v1' + path, body === undefined ? { signal } : {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal,
   });
   const data = await response.json();
   if (!response.ok) throw new ApiError(data.error?.message || 'The local server could not complete this request.', data.error?.fields || []);

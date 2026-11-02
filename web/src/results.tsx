@@ -1,7 +1,7 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useRef, useState, type ReactNode } from 'react';
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, ReferenceArea, ReferenceDot, BarChart, Bar, ScatterChart, Scatter, Cell } from 'recharts';
 import { Download, Printer, BookmarkPlus, ArrowRight } from 'lucide-react';
-import { download, fmt, pretty, type Report, type Metadata, type Design } from './api';
+import { download, fmt, pretty, type Report, type Metadata, type Design, type MixInputs } from './api';
 import { PageHeading, Section, Toggle } from './components';
 import type { Snapshot } from './workbench';
 import type { Unit } from './form';
@@ -9,6 +9,7 @@ import { saveFigure, tableCSV } from './chart-export';
 import { Diagnostics } from './diagnostics';
 import { EngineeringNotes, ResearchContext } from './engineering-notes';
 
+const Explorer = lazy(() => import('./explorer'));
 const colors = ['#2a6257', '#596f89', '#a45436', '#94721b', '#8c9382', '#b3c6b2'];
 const modelName = (name: string) => name === 'aci_table' ? 'ACI table' : pretty(name);
 export function Chart({ title, note, rows, children }: { title: string; note: string; rows: Record<string, unknown>[]; children: ReactNode }) {
@@ -29,9 +30,10 @@ export const Flags = Diagnostics;
 export function reportOf(snapshot: Snapshot): Report | null {
   return snapshot.mode === 'design' ? (snapshot.data as Design).prediction : (snapshot.data as { report: Report }).report;
 }
-export default function Results({ snapshot, unit, metadata }: { snapshot: Snapshot; unit: Unit; metadata: Metadata }) {
+export default function Results({ snapshot, unit, metadata, onAdopt }: { snapshot: Snapshot; unit: Unit; metadata: Metadata; onAdopt: (inputs: MixInputs) => void }) {
   const [tab, setTab] = useState('Overview');
   const [printing, setPrinting] = useState(false);
+  const [exploring, setExploring] = useState(false);
   const printReport = () => { setPrinting(true); setTimeout(() => { window.print(); }, 700); };
   const [models, setModels] = useState(['aci_table', 'abrams', 'bolomey', 'feret']);
   const [otherAir, setOtherAir] = useState(false), [saved, setSaved] = useState(false);
@@ -68,7 +70,7 @@ export default function Results({ snapshot, unit, metadata }: { snapshot: Snapsh
   const unsupportedWorkability = report.flags.some(flag => flag.code === 'SLUMP_IGNORES_ADMIXTURES');
   const allTabs = ['Overview', 'Strength', 'Water and workability', 'Composition and checks', ...(design ? ['Design steps'] : [])];
   return <article className="results"><PageHeading eyebrow={snapshot.mode === 'design' ? 'Design / calculated snapshot' : 'Evaluation / calculated snapshot'} title="A clearer picture of your mix.">Calculated {new Date(snapshot.at).toLocaleString()} · full-precision SI snapshot · {snapshot.options.calibration_id || 'uncalibrated project defaults'}</PageHeading>
-    <div className="actions report-actions no-print"><button className="button small" onClick={saveSnapshot}><BookmarkPlus size={16}/>{saved ? 'Saved for comparison' : 'Save for comparison'}</button><a className="text-link" href="#compare">Compare snapshots <ArrowRight size={15}/></a><button className="button small" onClick={() => download('research-report-si.json', JSON.stringify(snapshot, null, 2))}>JSON · SI</button><button className="button small" onClick={csv}>CSV · SI</button><button className="button small" onClick={printReport}><Printer size={15}/> Print / PDF</button></div>
+    <div className="actions report-actions no-print"><button className="button small" onClick={() => setExploring(!exploring)}>{exploring ? 'Close Mix Explorer' : 'Open Mix Explorer'}</button><button className="button small" onClick={saveSnapshot}><BookmarkPlus size={16}/>{saved ? 'Saved for comparison' : 'Save for comparison'}</button><a className="text-link" href="#compare">Compare snapshots <ArrowRight size={15}/></a><button className="button small" onClick={() => download('research-report-si.json', JSON.stringify(snapshot, null, 2))}>JSON · SI</button><button className="button small" onClick={csv}>CSV · SI</button><button className="button small" onClick={printReport}><Printer size={15}/> Print / PDF</button></div>
     <div className="no-print">{printing && <p role="status">Print layout prepared. All report sections are visible. <button className="text-link bare" onClick={() => setPrinting(false)}>Return to tab view</button></p>}</div><div className="result-summary"><div><span>Effective water / cement</span><strong>{fmt(report.wc, 4)}</strong><small>w/cm {fmt(report.wcm, 4)}</small></div><div><span>Effective water</span><strong>{fmt(mass(report.water.effective_water_kg))}<small> {massUnit}</small></strong><small>added + signed aggregate contributions</small></div><div><span>Workability method</span><strong>{unsupportedWorkability ? 'Unsupported' : 'Heuristic'}</strong><small>Water-table inversion; inspect limitations below.</small></div><div><span>{design ? 'Governing constraint' : 'Air content'}</span><strong>{design ? pretty(design.governing_constraint) : fmt(report.air_pct) + '%'}</strong><small>{design ? 'No silent adjustment to specified strength' : report.air_source.replaceAll('_', ' ')}</small></div></div>
     <details className="input-record" open={printing || undefined}><summary>Calculated input snapshot · canonical SI</summary><p>These are the submitted quantities and settings for this analysis. Later draft edits do not change this record.</p><ObjectTable value={{ inputs: snapshot.inputs, options: snapshot.options }}/></details><ResearchContext report={report}/><EngineeringNotes report={report}/>
     <div className="result-tabs no-print" role="tablist" aria-label="Result views">{allTabs.map(name => <button key={name} role="tab" aria-selected={tab === name} onClick={() => setTab(name)}>{name}</button>)}</div>
@@ -103,6 +105,7 @@ export default function Results({ snapshot, unit, metadata }: { snapshot: Snapsh
     </div>
     {design && <div className={(printing || tab === 'Design steps') ? 'result-view' : 'result-view print-only'}><div className="definition"><strong>What governed this design?</strong><p>Required mean {fmt(stress(design.wc.fcr.fcr_mpa))} {stressUnit}; strength w/c {fmt(design.wc.wc_strength, 4)}; durability w/c {fmt(design.wc.wc_durability, 4)}; final w/c {fmt(design.cement.wc_final, 4)}. Governing constraint: {pretty(design.governing_constraint)}.</p></div><div className="table-scroll"><table><thead><tr><th>Model</th><th>Required mean ({stressUnit})</th><th>Predicted mean</th><th>Signed difference</th></tr></thead><tbody>{Object.entries(report.predictions).map(([name, p]) => <tr key={name}><td>{modelName(name)}</td><td>{fmt(stress(design.wc.fcr.fcr_mpa))}</td><td>{fmt(p.mean_28d_mpa == null ? null : stress(p.mean_28d_mpa))}</td><td>{fmt(p.mean_28d_mpa == null ? null : stress(p.mean_28d_mpa - design.wc.fcr.fcr_mpa))}</td></tr>)}</tbody></table></div>
       {['slump', 'nmas', 'water_air', 'wc', 'cement', 'coarse', 'fine', 'field', 'proportions', 'batch'].map((name, i) => <details key={name} className="design-step" open={i === 7 || i === 9}><summary><span className="step-num">{String(i + 1).padStart(2, '0')}</span>{pretty(name)}</summary><ObjectTable value={(design as unknown as Record<string, unknown>)[name]}/>{name === 'field' && <><h3>Other convention: {design.field_other_convention.convention}</h3><ObjectTable value={design.field_other_convention}/></>}</details>)}<p className="caption">Detailed step tables and batch guidance use the explicitly labelled canonical SI units. Strength comparisons and principal charts follow the display-unit selector.</p></div>}
+    {exploring && <Suspense fallback={<p role="status">Opening hypothetical workspace…</p>}><Explorer baseline={snapshot} metadata={metadata} onAdopt={onAdopt}/></Suspense>}
     <div className="print-disclaimer">{metadata.disclaimer}<br/>Reference values are not primary-verified. Synthetic examples are not laboratory evidence.</div>
   </article>;
 }

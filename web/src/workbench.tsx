@@ -64,7 +64,10 @@ export default function Workbench({ mode, metadata }: { mode: Mode; metadata: Me
   };
   if (view === 'results' && snapshot) return <><div className="work-toolbar no-print"><button className="text-link bare" onClick={() => { setView('inputs'); window.scrollTo(0, 0); }}><ArrowLeft size={16}/> Edit inputs</button><Select label="Display units" value={unit} options={[{ value: 'SI', label: 'SI · metric' }, { value: 'US', label: 'US · customary' }]} onChange={changeUnit}/></div>
     {stale && <div className="notice warning" role="status">Inputs changed — run analysis again. This is the previous calculated snapshot.</div>}
-    <Suspense fallback={<p>Preparing the calculated report…</p>}><Results snapshot={snapshot} unit={unit} metadata={metadata}/></Suspense></>;
+    <Suspense fallback={<p>Preparing the calculated report…</p>}><Results snapshot={snapshot} unit={unit} metadata={metadata} onAdopt={inputs => {
+      if (mode === 'design') { sessionStorage.setItem('crs.load-evaluation', JSON.stringify(inputs)); location.hash = 'evaluate'; }
+      else { setState((s: typeof state) => ({ ...s, draft: draftFrom(inputs), unit: 'SI' })); setView('inputs'); window.scrollTo(0, 0); }
+    }}/></Suspense></>;
   return <>
     <PageHeading eyebrow={mode === 'evaluate' ? '01 / Evaluate a mix' : '02 / Design a mix'} title={mode === 'evaluate' ? 'Start with what goes in.' : 'Begin with a clear target.'}>
       {mode === 'evaluate' ? 'Enter your batch and material properties. We’ll follow the water, compare the models and make the important checks visible.' : 'A transparent ten-step course design, from strength and exposure to proportions you can take to a trial batch.'}</PageHeading>

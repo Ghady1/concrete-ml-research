@@ -75,4 +75,5 @@ professor decisions. Preserve concrete_ml and the original owner files.
 - U1 complete: scientific transparency, field influence and independent checks.
 - U2 complete: research pages, diagnostic grouping and snapshot print preparation.
 - U3 complete: coverage context and SVG/PNG/CSV figures.
-- U4–U7 remain planned, not implemented or release-audited.
+- U4 complete: isolated water/cement/age exploration with explicit adoption.
+- U5–U7 remain planned, not implemented or release-audited.

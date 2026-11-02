@@ -66,3 +66,24 @@ test('figures export real SVG PNG and full precision data', async ({ page }) => 
   await expect(page.getByText(/Shading is outside table coverage/)).toBeVisible();
 });
 
+test('Mix Explorer isolates hypothetical inputs and adopts only on request', async ({ page }) => {
+  await page.goto('/#evaluate');
+  await page.getByRole('button', { name: 'Run analysis', exact: true }).click();
+  await page.getByRole('button', { name: 'Open Mix Explorer' }).click();
+  const explorer = page.locator('.mix-explorer');
+  await expect(explorer.getByRole('heading', { name: 'Change one thing. See what follows.' })).toBeVisible();
+  const response = page.waitForResponse(async response => response.url().endsWith('/api/v1/predict') && response.request().postDataJSON()?.inputs.water_kg === 215);
+  await explorer.getByRole('textbox', { name: /Added water/ }).fill('215');
+  await response;
+  await expect(explorer.getByRole('button', { name: /Use hypothetical as new evaluation draft/ })).toBeVisible();
+  const pending = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'JSON · SI', exact: true }).click();
+  const { readFile } = await import('node:fs/promises');
+  const baseline = JSON.parse(await readFile((await (await pending).path())!, 'utf8'));
+  expect(baseline.inputs.water_kg).toBe(200);
+  await explorer.getByRole('button', { name: /Use hypothetical as new evaluation draft/ }).click();
+  await expect(page.getByRole('textbox', { name: /Added water/ })).toHaveValue('215');
+  await expect(page.getByRole('textbox', { name: /Cement content/ })).toHaveValue('315');
+  await page.getByRole('button', { name: /View last report/ }).click();
+  await expect(page.getByRole('status')).toContainText('Inputs changed');
+});

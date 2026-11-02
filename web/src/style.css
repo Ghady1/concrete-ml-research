@@ -31,3 +31,6 @@
 @media print{.input-record>div,.input-record>p{display:block!important}.input-record{break-before:page}.research-context{background:white}.chart-panel{break-inside:avoid}.chart-grid{grid-template-columns:1fr}.chart-canvas{height:280px}}
 
 .figure-downloads{display:flex;gap:3px;flex-shrink:0}.figure-downloads button{font-size:11px;background:transparent;border:1px solid var(--line);padding:7px 8px;min-height:32px}.figure-downloads button:hover{background:var(--soft)}.chart-heading{gap:12px;flex-wrap:wrap}
+
+.mix-explorer{margin:35px 0;border:1px solid var(--line);padding:30px;background:#f0f1e9;border-radius:5px}.mix-explorer h2{margin:15px 0;font-size:34px}.mix-explorer>p{margin:18px 0}.mix-explorer .fields{margin:25px 0}.mix-explorer .chart-panel{margin:25px 0;background:var(--surface)}.explorer-checks{margin:25px 0}.explorer-checks summary{cursor:pointer;font-weight:550}
+@media(max-width:700px){.mix-explorer{padding:20px 15px}.mix-explorer h2{font-size:28px}}
