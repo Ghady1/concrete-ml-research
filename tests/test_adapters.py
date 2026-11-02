@@ -72,3 +72,18 @@ def test_streamlit_mode_b_defaults():
     app.number_input(key='b_nmas_mm').set_value(u.mm_to_in(25)).run(timeout=45)
     assert not app.exception
     assert app.number_input(key='b_air_pct').value==6
+
+
+def test_streamlit_mode_a_and_prediction():
+    pytest.importorskip('streamlit')
+    from streamlit.testing.v1 import AppTest
+    app=AppTest.from_file(str(Path(__file__).resolve().parents[1]/'app'/'streamlit_app.py'))
+    app.run(timeout=45)
+    app.sidebar.selectbox(key='mode').select('Mode A').run(timeout=45)
+    assert not app.exception
+    assert any('10.' in expander.label for expander in app.expander)
+    app.button(key='predict_design').click().run(timeout=45)
+    assert not app.exception
+    assert len(app.metric)>=6
+    app.sidebar.selectbox(key='unit_system').select('US').run(timeout=45)
+    assert not app.exception

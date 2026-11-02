@@ -33,3 +33,17 @@ the page code; unit conversion is the adapter's boundary responsibility.
 
 Mode B page commit: **651 passed**, full suite in project Python 3.12 `.venv`,
 including Streamlit defaults, SI/US value preservation and air-override interaction.
+
+## Mode A page
+
+The design page reuses the material cards and pure Mode A adapter. It adds
+strength/durability targets, geometry or an explicit NMAS, water reduction,
+cement-minimum conditions and batch volume. The selected sidebar moisture
+convention determines the field result, with the alternative shown alongside.
+All ten steps are collapsible and include intermediate values and the governing
+constraint. The design can be exported as SI JSON or sent directly back through
+the Mode B engine. No independent design equation is implemented in the page.
+
+Mode A page commit: **652 passed**, full suite, including navigating to Mode A,
+rendering all ten steps, predicting the design back through Mode B and switching
+the design page to US units without exceptions.

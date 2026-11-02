@@ -9,9 +9,10 @@ import streamlit as st
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from app.adapters import (DEFAULT_VALUES,mode_b_inputs_from_widgets,report_rows_for_display,
-    report_to_csv_text,default_air_pct)
+    report_to_csv_text,default_air_pct,mode_a_inputs_from_widgets)
 from concretecalc import schemas as s, units as u
 from concretecalc.mode_b import run_mode_b,report_to_dict
+from concretecalc.mix_design import design_mix,to_mode_b_inputs
 
 
 def _convert(value: float,kind: str,to_us: bool) -> float:
@@ -209,17 +210,121 @@ def render_report(report,unit_system: str) -> None:
     st.download_button('Download report · CSV (SI)',report_to_csv_text(report),'strength-report.csv','text/csv')
 
 
+def _flatten(value: dict,prefix: str='') -> list[tuple[str,object]]:
+    """Flatten step data for display; flags are presented separately."""
+    rows=[]
+    for key,item in value.items():
+        if key=='flags':
+            continue
+        label=prefix+key
+        if isinstance(item,dict):
+            rows.extend(_flatten(item,label+'.'))
+        elif isinstance(item,(tuple,list)):
+            rows.append((label,'; '.join(str(part) for part in item)))
+        else:
+            rows.append((label,item))
+    return rows
+
+
+def _design_rows(step,number: int,unit_system: str) -> list[dict]:
+    """Format step quantities, distinguishing per-m3 field weights from batch kg."""
+    us=unit_system=='US'
+    result=[]
+    for key,value in _flatten(asdict(step)):
+        label=key.replace('_',' ').replace('.',' · ').title()
+        if key.startswith('volumes_m3.'):
+            label='Volume fraction · '+key.split('.')[-1].title()
+        elif key=='fine_volume_m3':
+            label='Fine volume fraction'
+        elif key.startswith('limits_mm.'):
+            label='Size limit · '+key.split('.')[-1].replace('_',' ').title()
+        if isinstance(value,(int,float)) and not isinstance(value,bool):
+            kind=''
+            if key.endswith('_kg_m3') or (key.endswith('_kg') and number!=10):
+                kind='content'
+            elif key.endswith('_kg'):
+                kind='mass'
+            elif key.endswith('_mpa'):
+                kind='stress'
+            elif key.endswith('_mm') or key.startswith('limits_mm.'):
+                kind='length'
+            elif key=='batch_volume_m3':
+                kind='volume'
+            units={'content':'lb/yd³' if us else 'kg/m³','mass':'lb' if us else 'kg',
+                'stress':'psi' if us else 'MPa','length':'in' if us else 'mm','volume':'yd³' if us else 'm³'}
+            if kind:
+                value=_convert(value,kind,True) if us else value
+                for suffix in (' Kg M3',' Kg',' Mpa',' Mm',' M3'):
+                    if label.endswith(suffix):
+                        label=label[:-len(suffix)]
+                        break
+                label+=f' ({units[kind]})'
+            value=f'{value:.6f}'
+        result.append({'Quantity':label,'Value':'not applicable' if value is None else str(value)})
+    return result
+
+
+def mode_a_page(unit_system: str,convention: str,policy: str,normalise: bool) -> None:
+    """Collect design inputs and render all ten returned steps, without equations."""
+    values=material_widgets('a',design=True)
+    us=unit_system=='US'
+    with st.container(border=True):
+        st.subheader('Design targets and geometry')
+        values['specified_fc_mpa']=_number('a','specified_fc_mpa',f'Specified strength ({"psi" if us else "MPa"})',25,'stress',.000001)
+        values['durability_class']=_select('a','durability_class','Durability class',list(s.DURABILITY_CLASSES),'none')
+        values['underwater']=st.checkbox('Underwater placement',key='a_underwater')
+        values['flatwork']=st.checkbox('Flatwork minimum cement',key='a_flatwork')
+        values['hand_consolidated']=st.checkbox('Hand-consolidated mass concrete',key='a_hand_consolidated')
+        if st.checkbox('Override element default slump',key='a_override_slump'):
+            values['slump_target_mm']=_number('a','slump_target_mm',f'Target slump ({"in" if us else "mm"})',75,'length')
+        if not st.checkbox('Use entered NMAS instead of geometry',value=True,key='a_override_nmas'):
+            values['nmas_mm']=None
+            for field,label,default in [('form_min_dimension_mm','Smallest form dimension',200),
+                ('rebar_clear_spacing_mm','Clear rebar spacing',40),('cover_mm','Clear cover',40),
+                ('slab_thickness_mm','Slab thickness',0)]:
+                value=_number('a',field,f'{label} ({"in" if us else "mm"}; 0 = not supplied)',default,'length')
+                values[field]=None if value==0 else value
+        values['bb0_adjustment_factor']=_number('a','bb0_adjustment_factor','Coarse bulk-ratio adjustment',1,minimum=.000001)
+        values['batch_volume_m3']=_number('a','batch_volume_m3',f'Trial batch volume ({"yd³" if us else "m³"})',1,'volume',.000001)
+    values['moisture_convention']=convention
+    design=design_mix(mode_a_inputs_from_widgets(values,unit_system),policy)
+    st.header('Ten-step design walkthrough')
+    st.metric('Governing constraint',design.governing_constraint.replace('_',' ').title())
+    st.metric('Final water / cement',f'{design.cement.wc_final:.4f}')
+    steps=[('Slump',design.slump),('Aggregate size',design.nmas),('Water and air',design.water_air),
+        ('Strength and durability',design.wc),('Cement',design.cement),('Coarse aggregate',design.coarse),
+        ('Fine aggregate',design.fine),('Field moisture corrections',design.field),
+        ('Field proportions · C:FA:CA:W',design.proportions),('Batch weights and trial guidance',design.batch)]
+    for number,(label,step) in enumerate(steps,start=1):
+        with st.expander(f'{number}. {label}',expanded=number in (8,10)):
+            st.table(_design_rows(step,number,unit_system))
+            if number==8:
+                st.caption(f'Alternative moisture convention: {design.field_other_convention.convention}')
+                st.table(_design_rows(design.field_other_convention,8,unit_system))
+                st.caption('Course applies the slide correction directly to design masses; strict uses SSD-consistent correction. See the professor question on this basis difference.')
+    render_flags(design.flags)
+    st.download_button('Download design · JSON (SI)',json.dumps(asdict(design),indent=2),
+                       'mix-design.json','application/json')
+    if st.button('Predict this design back in Mode B',key='predict_design'):
+        prediction=run_mode_b(to_mode_b_inputs(design),policy=policy,normalise_age_to_28d=normalise)
+        st.caption('Comparison uses the selected field moisture convention. Research models may differ from the required mean; durability and cement minimums can raise predicted strength.')
+        render_report(prediction,unit_system)
+
+
 st.set_page_config(page_title='Concrete research calculator',layout='wide')
 st.title('Concrete research calculator')
 st.info(s.DISCLAIMER)
 unit_system=st.sidebar.selectbox('Unit system',['SI','US'],key='unit_system',on_change=_unit_change)
 convention=st.sidebar.selectbox('Moisture convention',['course','strict'],key='moisture_convention')
 policy=st.sidebar.selectbox('Out-of-range policy',['extrapolate','clamp','raise'],key='policy')
-mode=st.sidebar.selectbox('Mode',['Mode B'],key='mode')
+mode=st.sidebar.selectbox('Mode',['Mode B','Mode A'],key='mode')
 normalise=st.sidebar.checkbox('Normalize age equation to 28 days',key='normalise_age')
 try:
-    values=material_widgets('b')
-    inputs=mode_b_inputs_from_widgets(values,unit_system)
-    render_report(run_mode_b(inputs,policy=policy,normalise_age_to_28d=normalise),unit_system)
+    if mode=='Mode B':
+        values=material_widgets('b')
+        inputs=mode_b_inputs_from_widgets(values,unit_system)
+        render_report(run_mode_b(inputs,policy=policy,normalise_age_to_28d=normalise),unit_system)
+    else:
+        mode_a_page(unit_system,convention,policy,normalise)
 except (ValueError,KeyError,OverflowError) as error:
     st.error(str(error))
