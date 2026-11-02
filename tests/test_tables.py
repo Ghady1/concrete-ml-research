@@ -542,7 +542,8 @@ def load_any(table_id):
 
 
 def test_list_table_ids_matches_the_data_folder():
-    assert set(list_table_ids()) == set(ALL_IDS)
+    # M09 adds a separately validated presets envelope (approved D-3).
+    assert set(list_table_ids()) == set(ALL_IDS) | {'model_constants'}
     assert list(list_table_ids()) == sorted(list_table_ids())
 
 

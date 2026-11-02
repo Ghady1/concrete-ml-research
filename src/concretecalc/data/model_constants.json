@@ -1,0 +1,120 @@
+{
+  "meta": {
+    "id": "model_constants",
+    "title": "Provisional fitted and unverified literature model presets",
+    "source": "Project task section 6; project fits of CIE308 table transcription; not primary verified",
+    "verified_against_primary": false,
+    "units": {
+      "A": "MPa",
+      "B": "dimensionless",
+      "K": "MPa",
+      "age_basis_days": "days"
+    },
+    "notes": "Project fits are not laboratory calibrations. Feret 3.2 MPa pointwise tolerance approved 2026-11-02. Seven-day preset stored only."
+  },
+  "kind": "presets",
+  "presets": [
+    {
+      "model": "abrams",
+      "preset": "project_fit",
+      "air_entrained": false,
+      "age_basis_days": 28,
+      "values": {
+        "A": 114.90859118660333,
+        "B": 12.497223188030976
+      },
+      "source": "fitted by this project from ACI table points, not from literature; provisional and unverified",
+      "verified": false
+    },
+    {
+      "model": "bolomey",
+      "preset": "project_fit",
+      "air_entrained": false,
+      "age_basis_days": 28,
+      "values": {
+        "K": 20.503183957590146
+      },
+      "source": "fitted by this project from ACI table points, not from literature; provisional and unverified",
+      "verified": false
+    },
+    {
+      "model": "abrams",
+      "preset": "project_fit",
+      "air_entrained": true,
+      "age_basis_days": 28,
+      "values": {
+        "A": 96.48155310898247,
+        "B": 13.379150046882083
+      },
+      "source": "fitted by this project from ACI table points, not from literature; provisional and unverified",
+      "verified": false
+    },
+    {
+      "model": "bolomey",
+      "preset": "project_fit",
+      "air_entrained": true,
+      "age_basis_days": 28,
+      "values": {
+        "K": 16.653845090818173
+      },
+      "source": "fitted by this project from ACI table points, not from literature; provisional and unverified",
+      "verified": false
+    },
+    {
+      "model": "feret",
+      "preset": "project_fit",
+      "air_entrained": null,
+      "age_basis_days": 28,
+      "values": {
+        "K": 230.00330523607096
+      },
+      "source": "fitted by this project from ACI table points, not from literature; provisional and unverified; basis: cement SG 3.15, water 205/184 kg/m3 and air 2/5 percent non-AE/AE (A-14)",
+      "verified": false
+    },
+    {
+      "model": "aci_table",
+      "preset": "project_fit",
+      "air_entrained": null,
+      "age_basis_days": 28,
+      "values": {},
+      "source": "CIE308 required average strength table; unverified transcription after ACI 211.1",
+      "verified": false
+    },
+    {
+      "model": "abrams",
+      "preset": "lit_96_7",
+      "air_entrained": null,
+      "age_basis_days": 28,
+      "values": {
+        "A": 96,
+        "B": 7
+      },
+      "source": "Project task section 6 literature alternative; original source unresolved, unverified",
+      "verified": false
+    },
+    {
+      "model": "abrams",
+      "preset": "lit_96.55_8.2",
+      "air_entrained": null,
+      "age_basis_days": 28,
+      "values": {
+        "A": 96.55,
+        "B": 8.2
+      },
+      "source": "Project task section 6 literature alternative; original source unresolved, unverified",
+      "verified": false
+    },
+    {
+      "model": "abrams",
+      "preset": "lit_63.45_14_7d",
+      "air_entrained": null,
+      "age_basis_days": 7,
+      "values": {
+        "A": 63.45,
+        "B": 14
+      },
+      "source": "Project task section 6 literature alternative; original source unresolved, unverified",
+      "verified": false
+    }
+  ]
+}

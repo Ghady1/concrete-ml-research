@@ -53,6 +53,7 @@ Every choice not dictated by the task text. Each one is a default the owner can 
 - **A-29** NMAS rule "3/4 of smallest clear rebar spacing (or cover)" = 0.75 x min(given spacing, given cover). The governing limit is the smallest of all given limits.
 
 ## Calibration
+- **A-46** R2 for constant measured strengths is reported as 1 for zero residual and 0 otherwise (avoids an undefined division). Fitting rejects nonfinite/nonpositive rows, constant w/c for Abrams, and Abrams B<=1. Preset dictionaries are read fresh so a caller cannot mutate another prediction's defaults. Seven-day presets cannot generate 28-day means (approved D-4).
 - **A-13** The numpy-only fit functions (`calibration/fit.py`) are created in M9, because the default constants must be produced and re-verified by them. Dataset/store come in M14.
 - **A-21** `created_utc` is supplied by the caller (UI/store boundary) so that fit functions stay pure.
 

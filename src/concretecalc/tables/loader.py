@@ -15,6 +15,7 @@ accident; the dataclasses are frozen so their fields cannot be reassigned.
 """
 
 import json
+import math
 from functools import lru_cache
 from importlib.resources import files
 
@@ -118,3 +119,37 @@ def list_table_ids() -> tuple[str, ...]:
         if entry.name.endswith(".json"):
             ids.append(entry.name[: -len(".json")])
     return tuple(sorted(ids))
+
+
+def load_presets() -> tuple[dict, ...]:
+    """Load independently owned model presets (approved D-3 presets kind).
+
+    Deliberately uncached: callers may own/edit dictionaries without mutating
+    another prediction's constants. Parameters remain unverified reference data.
+    """
+    raw = _read_json('model_constants')
+    _check_kind(raw, 'model_constants', 'presets')
+    _build_meta(raw, 'model_constants')
+    if set(raw) != {'meta', 'kind', 'presets'} or not isinstance(raw['presets'], list):
+        raise ValueError('model_constants: malformed presets envelope')
+    required = {'model', 'preset', 'air_entrained', 'age_basis_days', 'values', 'source', 'verified'}
+    seen = set()
+    for preset in raw['presets']:
+        if not isinstance(preset, dict) or set(preset) != required:
+            raise ValueError('model_constants: malformed preset')
+        if not isinstance(preset['source'], str) or not preset['source'].strip():
+            raise ValueError('model_constants: preset source is required')
+        if type(preset['verified']) is not bool or type(preset['air_entrained']) not in (bool, type(None)):
+            raise ValueError('model_constants: invalid verification/air field')
+        if not isinstance(preset['values'], dict):
+            raise ValueError('model_constants: values must be a mapping')
+        for value in (*preset['values'].values(), preset['age_basis_days']):
+            if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
+                raise ValueError('model_constants: parameters and age must be finite positive numbers')
+        key = (preset['model'], preset['preset'], preset['air_entrained'])
+        if key in seen:
+            raise ValueError('model_constants: duplicate preset')
+        seen.add(key)
+    if not seen:
+        raise ValueError('model_constants: no presets')
+    return tuple(raw['presets'])

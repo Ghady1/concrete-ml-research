@@ -347,3 +347,13 @@ Notes: Moist cured, 19-25 mm aggregate. x stored ascending. AE has no value at 4
 | x (axis) | 14, 21, 28, 35, 41, 48 | | | | |
 | non_ae | 0.82, 0.68, 0.57, 0.48, 0.41, 0.33 | | | | |
 | ae | 0.74, 0.59, 0.48, 0.4, 0.32, null | | | | |
+# Model presets added in M09
+
+`model_constants`: all values remain unverified. Project fits reproduce the
+source table numerically; this does not verify the source table against a
+primary standard. Literature presets need primary citations before use.
+
+- [ ] Verify Abrams literature sources, age basis and specimen basis.
+- [ ] Verify Bolomey and Feret applicability to the lab's materials.
+- [ ] Review the A-14 Feret fitting basis against professor guidance.
+

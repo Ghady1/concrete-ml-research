@@ -25,7 +25,7 @@ from concretecalc.schemas import (
     SlumpLookup,
 )
 from concretecalc.tables.interpolate import OutOfRangeError, Policy, interp1d, interp2d
-from concretecalc.tables.loader import load_grid, load_mapping, load_series
+from concretecalc.tables.loader import load_grid, load_mapping, load_series, load_presets
 from concretecalc.tables.models import Lookup, Status, worst
 from concretecalc.units import psi_to_mpa
 
@@ -39,7 +39,21 @@ def input_validation_limits() -> dict[str, float]:
     grid = load_grid('bulk_volume_ca')
     limits['fm.table_min'] = float(grid.cols[0])
     limits['fm.table_max'] = float(grid.cols[-1])
+    strengths = load_series('wc_vs_strength')
+    limits['strength.table_min_mpa'] = float(strengths.x[0])
+    limits['strength.table_max_mpa'] = float(strengths.x[-1])
     return limits
+
+
+def age_coefficients(cement_type: str, curing: str) -> tuple[float, float]:
+    """ACI 209R-92 coefficients, days and dimensionless; caller resolves type."""
+    values = load_mapping('age_coefficients').values
+    return values[f'{curing}.type_{cement_type}.a_days'], values[f'{curing}.type_{cement_type}.b']
+
+
+def model_presets() -> tuple[dict, ...]:
+    """Fresh provisional parameter dictionaries, with source and age metadata."""
+    return load_presets()
 
 
 def required_strength_rules() -> dict[str, float]:

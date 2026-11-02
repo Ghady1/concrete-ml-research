@@ -1,7 +1,7 @@
 # PLAN.md - `concretecalc` build plan (Phase 1, awaiting owner approval)
 
 Status: approved (owner decisions 2026-11-01). M01-M04 delivered by Claude Code;
-M05-M08 delivered (496 tests passing on Python 3.12). Owner authorized continued implementation and
+M05-M09 delivered (538 tests passing on Python 3.12). Owner authorized continued implementation and
 a push after each completed milestone on 2026-11-02.
 Read together with CLAUDE.md (ground rules), ASSUMPTIONS.md (A-numbers) and OPEN_QUESTIONS.md (Q-numbers).
 
@@ -271,6 +271,9 @@ Equations: forward f'cr = max(f'c + 1.34 sF, f'c + 2.33 sF - 3.45); F from f_fac
 Tests (abs 0.1 MPa vs slides, stated in test; abs 1e-9 vs hand calcs): f'c 31 no data -> 39.5; s 3.6 n 17 -> 37.01 (slide 37.1, discrepancy REPORTED in test docstring, not hidden); s 2.4 n >= 30 -> 34.22 (slide 34.3; abs 0.1 passes only just: |34.216-34.3| = 0.084); s 3.8 -> 36.40; F interpolation n 17 = 1.128; n 12 -> no-data branch + flag; band edges 20.99/21/35/35.01; inverse is the exact inverse of forward for every band and for sigma known (hypothesis); both gap regions -> lower candidate + flag.
 
 ## M9 - strength models + age + registry + model_constants.json
+Acceptance amendment approved by owner 2026-11-02: Feret pointwise tolerance is
+abs 3.2 MPa, superseding the original abs 2.5 MPa stated below. Retain the exact
+specified fit/basis (K=230.00330523607096); see OPEN_QUESTIONS resolved conflict.
 Files: `strength/__init__.py`, `strength/registry.py`, `strength/aci_table.py`, `strength/abrams.py`, `strength/bolomey.py`, `strength/feret.py`, `strength/age.py`, `calibration/__init__.py`, `calibration/fit.py` (numpy-only fit functions are needed here to produce/verify the default constants; dataset/store stay in M14 - A-13), `data/model_constants.json`, `tests/test_strength.py`.
 ```python
 @dataclass(frozen=True) class MixState:
@@ -388,6 +391,12 @@ Example 2 (24.1 MPa; sigma 2.4, n > 30; 25 mm round river gravel; CA SG 2.62, Ab
 Tests assert code == hand calc (abs 0.01 kg/m3 / 0.001 w/c / 0.01 MPa, stated); hand calc is never edited to match the code - any mismatch is reported.
 
 ## M14 - calibration (fit, store, dataset) + CSV template + experiment log layout
+
+Original task section 10 supplied by owner 2026-11-02. Stable SI CSV columns:
+`mix_id, material_set_id, cement_kg_m3, water_kg_m3, ca_kg_m3, fa_kg_m3, weight_basis, cement_sg, cement_type, ca_sg_ssd, ca_drd_kg_m3, ca_absorption_pct, ca_mc_pct, nmas_mm, ca_shape, fa_sg_ssd, fa_absorption_pct, fa_mc_pct, fa_fm, air_pct, air_entrained, curing, age_days, specimen, n_specimens, measured_strength_mpa, strength_std_mpa, measured_slump_mm, test_date, notes`.
+`strength_std_mpa` is optional. Reserved accepted/ignored columns:
+`scm_name, scm_pct, scm_sg, sp_kg_m3`. One row per mix per test age.
+Template must contain two rows labelled `EXAMPLE - SYNTHETIC - DELETE`.
 Files: `calibration/fit.py` (extend: `fit_all`, age policy), `calibration/store.py`, `calibration/dataset.py`, `experiments/mix_log_template.csv`, `docs/experiment_log_layout.md`, `calibrations/.gitkeep`, `tests/test_calibration.py`.
 ```python
 @dataclass(frozen=True) class CalibrationRow: ...                      # one field per schema column (task section 10), SI
