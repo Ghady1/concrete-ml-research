@@ -106,6 +106,7 @@ test('calibration demo fits saves and becomes selectable without stale fits',asy
   await page.getByRole('button',{name:'Fit three strength models'}).click();
   await expect(page.getByRole('heading',{name:'Predicted versus measured',exact:true})).toBeVisible();
   await expect(page.getByRole('heading',{name:'Inspect the residuals',exact:true})).toBeVisible();
+  await page.getByRole('checkbox',{name:'Allow a new saved revision for an existing material set'}).check();
   await page.getByRole('button',{name:'Save material-set fits'}).click();
   await expect(page.getByRole('status')).toContainText('Saved SYNTHETIC-DEMO');
   await page.getByRole('button',{name:/Age policy/}).click();

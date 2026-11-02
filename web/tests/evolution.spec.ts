@@ -121,3 +121,22 @@ test('notebook renames duplicates undoes removals and imports recorded versions'
   await expect(page.getByRole('alert')).toContainText('invalid');
   await expect(page.locator('.notebook-card')).toHaveCount(2);
 });
+
+test('calibration distinguishes grouped holdout and selected-model fits', async ({ page }) => {
+  await page.goto('/#calibration');
+  await page.getByRole('button', { name: /Explore the 12-row synthetic demo/ }).click();
+  await expect(page.getByText(/12 valid rows/)).toBeVisible();
+  await page.getByRole('button', { name: /Validation approach/ }).click();
+  await page.getByRole('option', { name: /Internal grouped holdout/ }).click();
+  await page.getByRole('checkbox', { name: 'Fit bolomey', exact: true }).uncheck();
+  await page.getByRole('checkbox', { name: 'Fit feret', exact: true }).uncheck();
+  await page.getByRole('button', { name: 'Fit selected models', exact: true }).click();
+  await expect(page.getByText(/Internal grouped holdout: fit only/)).toBeVisible();
+  await expect(page.getByRole('columnheader', { name: 'MAE (MPa)', exact: true })).toBeVisible();
+  await expect(page.getByText(/Held-out mixes · 28-day/)).toBeVisible();
+  await page.getByRole('button', { name: /Diagnostic observations/ }).click();
+  await page.getByRole('option', { name: 'Calibration rows · in sample', exact: true }).click();
+  await expect(page.getByText(/In-sample calibration · 28-day/)).toBeVisible();
+  await page.getByRole('checkbox', { name: 'Fit feret', exact: true }).check();
+  await expect(page.getByRole('button', { name: 'Save material-set fits' })).toHaveCount(0);
+});

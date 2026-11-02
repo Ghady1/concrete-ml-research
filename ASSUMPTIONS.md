@@ -63,3 +63,22 @@ Every choice not dictated by the task text. Each one is a default the owner can 
 ## Tests / files
 - **A-50** UI exports remain explicitly SI-labelled even when viewing US units. Actual-batch entries convert kg/lb and m3/yd3; per-volume contents convert kg/m3 and lb/yd3. Missing adapter keys use SI defaults; only explicitly supplied display-unit values are converted. Numeric widget values are converted on unit-system changes. The sidebar moisture convention applies to Mode A; Mode B uses the explicit aggregate basis.
 - **A-16** Slump tests go in a new `tests/test_slump.py` (not in the task's allowed list; D-6).
+
+## Studio 2.0 decisions (2026-11-02)
+
+- Intended yield remains declared, not automatically rebalanced. Computed density
+  is mass per declared volume and is not labelled a measured fresh density.
+- Workability from the inverse mixing-water table is heuristic. Placeholder
+  bounds remain in raw data for compatibility, not as confidence/accuracy claims.
+- Optional internal holdout requires at least 10 distinct mix IDs and holds out
+  max(2, floor(n_groups/5)) IDs, ordered by SHA-256 of `15:<mix_id>`. This is a
+  project sufficiency guard, not a validated sample-size recommendation. Mixing
+  repeated ages/specimens across train/test is prohibited. External validation
+  and repeated-fold cross-validation are not implemented in this phase.
+- New web fits require one air condition, cement type and curing condition per
+  material set. Recorded conditions are enforced on use; legacy files without
+  context remain readable. Selected-model replacement retains unselected models,
+  with each model retaining its own source/context.
+- Notebook persistence is opt-in local browser storage; lab upload bytes/rows are
+  not stored there. Version fingerprints identify runtime/data/parameters but
+  do not embed the software or certify correctness; retain the matching checkout.

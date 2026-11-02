@@ -77,4 +77,5 @@ professor decisions. Preserve concrete_ml and the original owner files.
 - U3 complete: coverage context and SVG/PNG/CSV figures.
 - U4 complete: isolated water/cement/age exploration with explicit adoption.
 - U5 complete: versioned notebook, comparison controls and analysis fingerprints.
-- U6–U7 remain planned, not implemented or release-audited.
+- U6 complete: selected fits, grouped holdout, diagnostics and atomic parameter revisions.
+- U7 release audit and teaching/extension documentation remain in progress.

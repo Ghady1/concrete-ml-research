@@ -1138,6 +1138,53 @@
         ],
         "title": "DesignResponse"
       },
+      "DiagnosticMetrics": {
+        "properties": {
+          "n": {
+            "type": "integer",
+            "title": "N"
+          },
+          "mae_mpa": {
+            "type": "number",
+            "title": "Mae Mpa"
+          },
+          "rmse_mpa": {
+            "type": "number",
+            "title": "Rmse Mpa"
+          },
+          "r2_mpa": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "R2 Mpa"
+          },
+          "default_rmse_mpa": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Rmse Mpa"
+          }
+        },
+        "type": "object",
+        "required": [
+          "n",
+          "mae_mpa",
+          "rmse_mpa",
+          "r2_mpa",
+          "default_rmse_mpa"
+        ],
+        "title": "DiagnosticMetrics"
+      },
       "DiagnosticPoint": {
         "properties": {
           "mix_id": {
@@ -1152,9 +1199,28 @@
             "type": "number",
             "title": "Predicted Mpa"
           },
+          "default_mpa": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Mpa"
+          },
           "residual_mpa": {
             "type": "number",
             "title": "Residual Mpa"
+          },
+          "split": {
+            "type": "string",
+            "enum": [
+              "calibration",
+              "held_out"
+            ],
+            "title": "Split"
           }
         },
         "type": "object",
@@ -1162,7 +1228,9 @@
           "mix_id",
           "measured_mpa",
           "predicted_mpa",
-          "residual_mpa"
+          "default_mpa",
+          "residual_mpa",
+          "split"
         ],
         "title": "DiagnosticPoint"
       },
@@ -1285,6 +1353,75 @@
         ],
         "title": "FineStep"
       },
+      "FitContext": {
+        "properties": {
+          "age_policy": {
+            "type": "string",
+            "title": "Age Policy"
+          },
+          "validation_mode": {
+            "type": "string",
+            "title": "Validation Mode"
+          },
+          "n_train": {
+            "type": "integer",
+            "title": "N Train"
+          },
+          "n_held_out": {
+            "type": "integer",
+            "title": "N Held Out"
+          },
+          "train_mix_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Train Mix Ids"
+          },
+          "test_mix_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Test Mix Ids"
+          },
+          "air_entrained": {
+            "type": "boolean",
+            "title": "Air Entrained"
+          },
+          "cement_type": {
+            "type": "string",
+            "title": "Cement Type"
+          },
+          "curing": {
+            "type": "string",
+            "title": "Curing"
+          },
+          "group_key": {
+            "type": "string",
+            "title": "Group Key",
+            "default": "mix_id"
+          },
+          "split_seed": {
+            "type": "string",
+            "title": "Split Seed",
+            "default": "15"
+          }
+        },
+        "type": "object",
+        "required": [
+          "age_policy",
+          "validation_mode",
+          "n_train",
+          "n_held_out",
+          "train_mix_ids",
+          "test_mix_ids",
+          "air_entrained",
+          "cement_type",
+          "curing"
+        ],
+        "title": "FitContext"
+      },
       "FitRequest": {
         "properties": {
           "dataset_id": {
@@ -1308,6 +1445,27 @@
             "type": "boolean",
             "title": "Accept Valid Subset",
             "default": false
+          },
+          "models": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "abrams",
+                "bolomey",
+                "feret"
+              ]
+            },
+            "type": "array",
+            "title": "Models"
+          },
+          "validation_mode": {
+            "type": "string",
+            "enum": [
+              "in_sample",
+              "group_holdout"
+            ],
+            "title": "Validation Mode",
+            "default": "in_sample"
           }
         },
         "type": "object",
@@ -1359,6 +1517,19 @@
           "data_hash": {
             "type": "string",
             "title": "Data Hash"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "additionalProperties": {
+                "$ref": "#/components/schemas/DiagnosticMetrics"
+              },
+              "type": "object"
+            },
+            "type": "object",
+            "title": "Metrics"
+          },
+          "context": {
+            "$ref": "#/components/schemas/FitContext"
           }
         },
         "type": "object",
@@ -1370,7 +1541,9 @@
           "eligible_rows",
           "excluded_rows",
           "converted_rows",
-          "data_hash"
+          "data_hash",
+          "metrics",
+          "context"
         ],
         "title": "FitResponse"
       },
@@ -2363,6 +2536,11 @@
           "fit_id": {
             "type": "string",
             "title": "Fit Id"
+          },
+          "replace_existing": {
+            "type": "boolean",
+            "title": "Replace Existing",
+            "default": false
           }
         },
         "type": "object",

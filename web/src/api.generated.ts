@@ -341,6 +341,19 @@ export interface components {
       prediction_error?: string | null;
       provenance: components["schemas"]["AnalysisProvenance"];
     };
+    /** DiagnosticMetrics */
+    DiagnosticMetrics: {
+      /** N */
+      n: number;
+      /** Mae Mpa */
+      mae_mpa: number;
+      /** Rmse Mpa */
+      rmse_mpa: number;
+      /** R2 Mpa */
+      r2_mpa: number | null;
+      /** Default Rmse Mpa */
+      default_rmse_mpa: number | null;
+    };
     /** DiagnosticPoint */
     DiagnosticPoint: {
       /** Mix Id */
@@ -349,8 +362,15 @@ export interface components {
       measured_mpa: number;
       /** Predicted Mpa */
       predicted_mpa: number;
+      /** Default Mpa */
+      default_mpa: number | null;
       /** Residual Mpa */
       residual_mpa: number;
+      /**
+       * Split
+       * @enum {string}
+       */
+      split: "calibration" | "held_out";
     };
     /** FieldWeights */
     FieldWeights: {
@@ -400,6 +420,37 @@ export interface components {
       /** Flags */
       flags: components["schemas"]["Flag"][];
     };
+    /** FitContext */
+    FitContext: {
+      /** Age Policy */
+      age_policy: string;
+      /** Validation Mode */
+      validation_mode: string;
+      /** N Train */
+      n_train: number;
+      /** N Held Out */
+      n_held_out: number;
+      /** Train Mix Ids */
+      train_mix_ids: string[];
+      /** Test Mix Ids */
+      test_mix_ids: string[];
+      /** Air Entrained */
+      air_entrained: boolean;
+      /** Cement Type */
+      cement_type: string;
+      /** Curing */
+      curing: string;
+      /**
+       * Group Key
+       * @default mix_id
+       */
+      group_key?: string;
+      /**
+       * Split Seed
+       * @default 15
+       */
+      split_seed?: string;
+    };
     /** FitRequest */
     FitRequest: {
       /** Dataset Id */
@@ -417,6 +468,14 @@ export interface components {
        * @default false
        */
       accept_valid_subset?: boolean;
+      /** Models */
+      models?: ("abrams" | "bolomey" | "feret")[];
+      /**
+       * Validation Mode
+       * @default in_sample
+       * @enum {string}
+       */
+      validation_mode?: "in_sample" | "group_holdout";
     };
     /** FitResponse */
     FitResponse: {
@@ -440,6 +499,13 @@ export interface components {
       converted_rows: number;
       /** Data Hash */
       data_hash: string;
+      /** Metrics */
+      metrics: {
+        [key: string]: {
+          [key: string]: components["schemas"]["DiagnosticMetrics"];
+        };
+      };
+      context: components["schemas"]["FitContext"];
     };
     /** FitResult */
     FitResult: {
@@ -796,6 +862,11 @@ export interface components {
     SaveRequest: {
       /** Fit Id */
       fit_id: string;
+      /**
+       * Replace Existing
+       * @default false
+       */
+      replace_existing?: boolean;
     };
     /** SlumpEstimate */
     SlumpEstimate: {

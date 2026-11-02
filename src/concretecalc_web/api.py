@@ -4,6 +4,7 @@ from dataclasses import asdict,replace
 import hashlib,json,tempfile,uuid
 from pathlib import Path
 from typing import Literal,get_args
+from threading import RLock
 
 from fastapi import FastAPI,UploadFile,HTTPException,Request
 from fastapi.exceptions import RequestValidationError
@@ -14,17 +15,16 @@ from pydantic import BaseModel,Field
 from concretecalc import schemas as s,units
 from concretecalc.mode_b import StrengthReport,run_mode_b
 from concretecalc.mix_design import MixDesignReport,design_mix,to_mode_b_inputs
-from concretecalc.calibration.dataset import CalibrationRow,load_rows,rows_to_fit_arrays,_row_inputs
-from concretecalc.calibration.fit import FitResult,fit_all
-from concretecalc.calibration.store import save_calibration,load_calibration
-from concretecalc.strength import ModelConstants,MixState
-from concretecalc.strength.registry import MODEL_REGISTRY
-from concretecalc.moisture import aggregate_moisture,effective_water
-from concretecalc.volumes import absolute_volume_m3,volume_check
+from concretecalc.calibration.dataset import CalibrationRow,load_rows
+from concretecalc.calibration.fit import FitResult
+from concretecalc.calibration.store import load_calibration
+from concretecalc.strength import ModelConstants
 from concretecalc.tables.lookups import air_content_pct
 from .examples import defaults_a,defaults_b,course_examples,synthetic_csv
 from .presentation import Visuals,chart_data
 from .provenance import AnalysisProvenance,analysis_provenance
+from .calibration_review import DiagnosticPoint,DiagnosticMetrics,partition_rows,fit_selected,diagnostics,diagnostic_metrics
+from .calibration_archive import save_bundle
 
 
 class Options(BaseModel):
@@ -80,10 +80,13 @@ class FitRequest(BaseModel):
     material_set_id: str
     age_policy: Literal['only_28d','convert']='only_28d'
     accept_valid_subset: bool=False
+    models: list[Literal['abrams','bolomey','feret']]=Field(default_factory=lambda: ['abrams','bolomey','feret'])
+    validation_mode: Literal['in_sample','group_holdout']='in_sample'
 
 
 class SaveRequest(BaseModel):
     fit_id: str
+    replace_existing: bool=False
 
 
 class RowIssue(BaseModel):
@@ -102,11 +105,18 @@ class UploadResponse(BaseModel):
     data_hash: str
 
 
-class DiagnosticPoint(BaseModel):
-    mix_id: str
-    measured_mpa: float
-    predicted_mpa: float
-    residual_mpa: float
+class FitContext(BaseModel):
+    age_policy: str
+    validation_mode: str
+    n_train: int
+    n_held_out: int
+    train_mix_ids: list[str]
+    test_mix_ids: list[str]
+    air_entrained: bool
+    cement_type: str
+    curing: str
+    group_key: str='mix_id'
+    split_seed: str='15'
 
 
 class FitResponse(BaseModel):
@@ -118,6 +128,8 @@ class FitResponse(BaseModel):
     excluded_rows: int
     converted_rows: int
     data_hash: str
+    metrics: dict[str,dict[str,DiagnosticMetrics]]
+    context: FitContext
 
 
 def create_app(calibrations_dir: Path | None=None) -> FastAPI:
@@ -126,6 +138,7 @@ def create_app(calibrations_dir: Path | None=None) -> FastAPI:
     directory=calibrations_dir or Path(__file__).resolve().parents[2]/'calibrations'
     datasets: OrderedDict=OrderedDict()
     fits: OrderedDict=OrderedDict()
+    calibration_lock=RLock()
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(request: Request,error: RequestValidationError):
@@ -140,18 +153,27 @@ def create_app(calibrations_dir: Path | None=None) -> FastAPI:
     async def http_error(request: Request,error: HTTPException):
         return JSONResponse(status_code=error.status_code,content={'error':{'message':str(error.detail),'fields':[]}})
 
-    def constants(options: Options) -> dict[str,ModelConstants] | None:
+    def constants(options: Options,context_inputs: s.MixInputs | s.ModeAInputs | None=None) -> dict[str,ModelConstants] | None:
         if options.calibration_id is None:
             return None
-        result={}
-        for name in ('abrams','bolomey','feret'):
-            try:
-                result[name]=load_calibration(options.calibration_id,name,directory)
-            except KeyError:
-                continue
-            except FileNotFoundError:
-                raise HTTPException(404,'Saved calibration no longer exists. Select another set.')
-        return result
+        with calibration_lock:
+            result={}
+            for name in ('abrams','bolomey','feret'):
+                try:
+                    result[name]=load_calibration(options.calibration_id,name,directory)
+                    raw=json.loads((directory/(options.calibration_id+'.json')).read_text(encoding='utf-8'))
+                    context=raw['models'][name].get('fit_context',{})
+                    if 'air_entrained' in context:
+                        result[name]=replace(result[name],air_entrained=context['air_entrained'])
+                    if context_inputs is not None:
+                        for attribute in ('cement_type','curing'):
+                            if attribute in context and getattr(context_inputs,attribute)!=context[attribute]:
+                                raise ValueError('Saved calibration '+attribute+' differs from this mix. Select matching conditions or another parameter set.')
+                except KeyError:
+                    continue
+                except FileNotFoundError:
+                    raise HTTPException(404,'Saved calibration no longer exists. Select another set.')
+            return result
 
     @app.get('/api/v1/health')
     def health():
@@ -173,7 +195,7 @@ def create_app(calibrations_dir: Path | None=None) -> FastAPI:
 
     @app.post('/api/v1/predict',response_model=PredictionResponse)
     def predict(body: PredictRequest):
-        report=run_mode_b(body.inputs,constants(body.options),body.options.policy,body.options.normalise_age_to_28d)
+        report=run_mode_b(body.inputs,constants(body.options,body.inputs),body.options.policy,body.options.normalise_age_to_28d)
         return PredictionResponse(report=report,visuals=chart_data(report,body.options.normalise_age_to_28d),
             provenance=analysis_provenance(asdict(body.inputs),body.options.model_dump(),report.predictions))
 
@@ -181,7 +203,7 @@ def create_app(calibrations_dir: Path | None=None) -> FastAPI:
     def design(body: DesignRequest):
         report=design_mix(body.inputs,body.options.policy)
         try:
-            prediction=run_mode_b(to_mode_b_inputs(report),constants(body.options),body.options.policy,body.options.normalise_age_to_28d)
+            prediction=run_mode_b(to_mode_b_inputs(report),constants(body.options,body.inputs),body.options.policy,body.options.normalise_age_to_28d)
         except ValueError as error:
             return DesignResponse(report=report,prediction=None,visuals=None,prediction_error=str(error),
                 provenance=analysis_provenance(asdict(body.inputs),body.options.model_dump(),{}))
@@ -211,15 +233,36 @@ def create_app(calibrations_dir: Path | None=None) -> FastAPI:
         suffix=Path(file.filename or '').suffix.lower()
         if suffix not in ('.csv','.xlsx'):
             raise ValueError('Upload a CSV or .xlsx file.')
+        if suffix=='.csv':
+            import csv,io
+            try:
+                count=sum(1 for row in csv.reader(io.StringIO(payload.decode('utf-8-sig'))) if any(value.strip() for value in row))
+                if count>5001:
+                    raise ValueError('The limit is 5,000 rows per file.')
+            except UnicodeError:
+                raise ValueError('CSV must use UTF-8 encoding.')
         with tempfile.TemporaryDirectory(prefix='concrete-studio-') as temporary:
             path=Path(temporary)/('records'+suffix)
             path.write_bytes(payload)
             if suffix=='.xlsx':
                 import zipfile
-                with zipfile.ZipFile(path) as archive:
-                    if sum(item.file_size for item in archive.infolist())>100*1024*1024:
-                        raise ValueError('Expanded workbook exceeds the supported size.')
-            rows,errors=load_rows(path)
+                try:
+                    with zipfile.ZipFile(path) as archive:
+                        if sum(item.file_size for item in archive.infolist())>100*1024*1024:
+                            raise ValueError('Expanded workbook exceeds the supported size.')
+                    from openpyxl import load_workbook
+                    workbook=load_workbook(path,read_only=True,data_only=True)
+                    try:
+                        if workbook.worksheets[0].max_row>5001:
+                            raise ValueError('Workbook exceeds 5,000 observation rows. Remove unused formatted rows if necessary.')
+                    finally:
+                        workbook.close()
+                except (zipfile.BadZipFile,KeyError,OSError):
+                    raise ValueError('The Excel file is malformed or unreadable. Save a valid .xlsx workbook and retry.')
+            try:
+                rows,errors=load_rows(path)
+            except (OSError,UnicodeError):
+                raise ValueError('The source file could not be read. Check its format and encoding.')
         if len(rows)+len({e[0] for e in errors if e[0]>1})>5000:
             raise ValueError('The limit is 5,000 rows per file.')
         key=uuid.uuid4().hex
@@ -238,33 +281,31 @@ def create_app(calibrations_dir: Path | None=None) -> FastAPI:
         if data['errors'] and not body.accept_valid_subset:
             raise ValueError('Review the errors and explicitly allow fitting only valid rows.')
         rows=tuple(row for row in data['rows'] if row.material_set_id==body.material_set_id)
-        arrays=rows_to_fit_arrays(rows,body.age_policy)
-        results=fit_all(arrays)
-        diagnostics={name:[] for name in results}
-        eligible=[row for row in rows if body.age_policy=='convert' or row.age_days==28]
-        for row,wc,measured in zip(eligible,arrays.wc,arrays.strength_mpa):
-            # Diagnostics need the physical state, not 244 plot samples per row.
-            # Reuse the core physical steps without repeatedly building a full report.
-            coarse=aggregate_moisture('CA',row.ca_kg_m3,row.weight_basis,row.ca_absorption_pct,row.ca_mc_pct)
-            fine=aggregate_moisture('FA',row.fa_kg_m3,row.weight_basis,row.fa_absorption_pct,row.fa_mc_pct)
-            water=effective_water(row.water_kg_m3,coarse,fine).effective_water_kg
-            volumes=volume_check((s.Binder('cement',row.cement_kg_m3,row.cement_sg,'cement'),),water,
-                coarse.ssd_kg,row.ca_sg_ssd,fine.ssd_kg,row.fa_sg_ssd,row.air_pct)
-            state=MixState(row.cement_kg_m3,row.cement_kg_m3,water,float(wc),float(wc),
-                row.air_pct,row.air_entrained,volumes.cement_m3,volumes.water_m3,
-                volumes.air_m3,row.cement_type,row.curing,28)
-            for name,result in results.items():
-                parameters=ModelConstants(name,'in_memory_fit',result.values,'In-sample fit; not saved',False,None,28)
-                predicted=MODEL_REGISTRY[name](state,parameters).mean_28d_mpa
-                diagnostics[name].append({'mix_id':row.mix_id,'measured_mpa':float(measured),
-                    'predicted_mpa':predicted,'residual_mpa':float(measured)-predicted})
+        eligible=tuple(row for row in rows if body.age_policy=='convert' or row.age_days==28)
+        for attribute in ('air_entrained','cement_type','curing'):
+            if len({getattr(row,attribute) for row in eligible})>1:
+                raise ValueError('Fit one '+attribute+' condition at a time; separate material_set_id values for incompatible conditions.')
+        train,test=partition_rows(eligible,body.validation_mode)
+        results=fit_selected(train,body.age_policy,body.models)
+        test_ids={row.mix_id for row in test}
+        points=diagnostics(eligible,body.age_policy,results,test_ids)
+        metrics={}
+        for name,values in points.items():
+            metrics[name]={}
+            for split in ('calibration','held_out'):
+                selected=[value for value in values if value.split==split]
+                if selected:
+                    metrics[name][split]=diagnostic_metrics(selected)
+        context=FitContext(age_policy=body.age_policy,validation_mode=body.validation_mode,
+            n_train=len(train),n_held_out=len(test),train_mix_ids=sorted({row.mix_id for row in train}),test_mix_ids=sorted(test_ids),
+            air_entrained=eligible[0].air_entrained,cement_type=eligible[0].cement_type,curing=eligible[0].curing)
         key=uuid.uuid4().hex
-        fits[key]={'dataset_id':body.dataset_id,'material':body.material_set_id,'results':results,'data':data}
+        fits[key]={'dataset_id':body.dataset_id,'material':body.material_set_id,'results':results,'data':data,'context':context.model_dump()}
         while len(fits)>16:
             fits.popitem(last=False)
-        return {'fit_id':key,'material_set_id':body.material_set_id,'results':{n:asdict(r) for n,r in results.items()},
-            'diagnostics':diagnostics,'eligible_rows':len(eligible),'excluded_rows':len(rows)-len(eligible),
-            'converted_rows':sum(r.age_days!=28 for r in eligible),'data_hash':data['hash']}
+        return FitResponse(fit_id=key,material_set_id=body.material_set_id,results=results,
+            diagnostics=points,metrics=metrics,context=context,eligible_rows=len(eligible),excluded_rows=len(rows)-len(eligible),
+            converted_rows=sum(row.age_days!=28 for row in eligible),data_hash=data['hash'])
 
     @app.post('/api/v1/calibration/save')
     def save(body: SaveRequest):
@@ -273,9 +314,12 @@ def create_app(calibrations_dir: Path | None=None) -> FastAPI:
             raise HTTPException(404,'Fit expired. Fit the selected dataset again.')
         if fit['dataset_id'] not in datasets:
             raise HTTPException(404,'Source upload expired. Re-upload and fit before saving.')
-        for name,result in fit['results'].items():
-            save_calibration(fit['material'],name,result,fit['data']['name'],fit['data']['hash'],directory)
-        return {'material_set_id':fit['material'],'saved_models':list(fit['results'])}
+        try:
+            with calibration_lock:
+                return save_bundle(fit['material'],fit['results'],fit['data']['name'],fit['data']['hash'],
+                    fit['context'],directory,body.replace_existing)
+        except FileExistsError as error:
+            raise HTTPException(409,str(error))
 
     static=Path(__file__).parent/'static'
     if (static/'index.html').is_file():
