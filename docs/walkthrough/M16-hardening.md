@@ -16,8 +16,8 @@ Desktop checkout in CodeBase. Original ground rules remain intact.
 - Full suite with all extras installed: **655 passed, no skips** on Windows,
   Python 3.12.8. Includes Hypothesis properties, independent course examples,
   Excel import, architecture scans and Streamlit interactions.
-- Statement coverage (`--cov=concretecalc --cov=app`): **96%**, 2334 statements,
-  98 not covered. This is statement coverage, not branch coverage.
+- Statement coverage (`--cov=concretecalc --cov=app`): **96%**, 2348 statements,
+  99 not covered after final reporting review. This is statement coverage, not branch coverage.
 - `pip check`: no broken requirements.
 - `git diff --check`: clean. Comparison against original baseline `2707be6`
   for `src/concrete_ml`, `tests/test_engineering.py` and `requirements.txt`: empty.
@@ -38,7 +38,8 @@ Desktop checkout in CodeBase. Original ground rules remain intact.
 | Table models and interpolation | 100% |
 | Domain lookups | 98% |
 | Validation, Mode A | 97% |
-| Volumes, Mode B, adapters | 96% |
+| Volumes, Mode B | 96% |
+| Display adapters | 95% |
 | Streamlit pages | 94% |
 | Parametric fitting | 92% |
 | Dataset import | 90% |
@@ -70,3 +71,16 @@ slump/flag thresholds, model applicability, and SCM/SP limitations remain visibl
 No new civil assumptions or unresolved implementation decisions were introduced
 in this hardening milestone. Runtime calibration records stay local and require
 the user's own backup process.
+
+## Completion review
+
+Rechecked the original requirements and added the explicit signed comparison of
+each predicted 28-day mean against Mode A's required mean. It uses the selected
+display units and is tested in the Mode A prediction-back interaction. Clarified
+the sidebar help: the course/strict selector controls Mode A field batching;
+Mode B uses the explicit aggregate basis. No engine equation, public engine
+signature, dependency or reference value changed.
+
+Repeated full coverage run: **655 passed, 96% statements**. Started the documented
+Streamlit command headlessly on a temporary loopback port, confirmed HTTP 200
+for both `/` and `/_stcore/health` (`ok`), then stopped the temporary server.

@@ -14,7 +14,7 @@ import streamlit as st
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from app.adapters import (DEFAULT_VALUES,mode_b_inputs_from_widgets,report_rows_for_display,
-    report_to_csv_text,default_air_pct,mode_a_inputs_from_widgets)
+    report_to_csv_text,default_air_pct,mode_a_inputs_from_widgets,design_comparison_rows)
 from concretecalc import schemas as s, units as u
 from concretecalc.mode_b import run_mode_b,report_to_dict
 from concretecalc.mix_design import design_mix,to_mode_b_inputs
@@ -319,6 +319,8 @@ def mode_a_page(unit_system: str,convention: str,policy: str,normalise: bool,con
     if st.button('Predict this design back in Mode B',key='predict_design'):
         prediction=run_mode_b(to_mode_b_inputs(design),constants=constants,policy=policy,normalise_age_to_28d=normalise)
         st.caption('Comparison uses the selected field moisture convention. Research models may differ from the required mean; durability and cement minimums can raise predicted strength.')
+        st.subheader('Design versus prediction')
+        st.table(design_comparison_rows(design,prediction,unit_system))
         render_report(prediction,unit_system)
 
 
@@ -394,7 +396,8 @@ st.set_page_config(page_title='Concrete research calculator',layout='wide')
 st.title('Concrete research calculator')
 st.info(s.DISCLAIMER)
 unit_system=st.sidebar.selectbox('Unit system',['SI','US'],key='unit_system',on_change=_unit_change)
-convention=st.sidebar.selectbox('Moisture convention',['course','strict'],key='moisture_convention')
+convention=st.sidebar.selectbox('Moisture convention',['course','strict'],key='moisture_convention',
+    help='Used for Mode A field batching. Mode B uses the explicit aggregate weight basis.')
 policy=st.sidebar.selectbox('Out-of-range policy',['extrapolate','clamp','raise'],key='policy')
 mode=st.sidebar.selectbox('Mode',['Mode B','Mode A','Calibration'],key='mode')
 normalise=st.sidebar.checkbox('Normalize age equation to 28 days',key='normalise_age')

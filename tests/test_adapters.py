@@ -85,6 +85,8 @@ def test_streamlit_mode_a_and_prediction():
     app.button(key='predict_design').click().run(timeout=45)
     assert not app.exception
     assert len(app.metric)>=6
+    assert any(any('Difference from required mean' in str(column) for column in table.value.columns)
+               for table in app.table)
     app.sidebar.selectbox(key='unit_system').select('US').run(timeout=45)
     assert not app.exception
 

@@ -4,6 +4,7 @@ import io
 from typing import Literal
 from concretecalc import schemas as s, units as u
 from concretecalc.mode_b import StrengthReport
+from concretecalc.mix_design import MixDesignReport
 from concretecalc.tables.lookups import air_content_pct
 
 UnitSystem=Literal['SI','US']
@@ -141,3 +142,20 @@ def default_air_pct(nmas_mm: float,exposure: s.Exposure,air_entrained: bool) -> 
     if lookup.value is None:
         raise ValueError('Default air unavailable')
     return lookup.value
+
+
+def design_comparison_rows(design: MixDesignReport,prediction: StrengthReport,
+                            unit_system: UnitSystem) -> list[dict[str,str]]:
+    """Display each 28-day model mean and signed difference from design fcr."""
+    if unit_system not in ('SI','US'):
+        raise ValueError('Unknown unit_system')
+    convert=u.mpa_to_psi if unit_system=='US' else float
+    unit='psi' if unit_system=='US' else 'MPa'
+    required=design.wc.fcr.fcr_mpa
+    rows=[]
+    for name,result in prediction.predictions.items():
+        mean=result.mean_28d_mpa
+        rows.append({'Model':name,f'Required mean ({unit})':f'{convert(required):.3f}',
+            f'Predicted 28-day mean ({unit})':'unavailable' if mean is None else f'{convert(mean):.3f}',
+            f'Difference from required mean ({unit})':'unavailable' if mean is None else f'{convert(mean-required):+.3f}'})
+    return rows
