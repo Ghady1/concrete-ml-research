@@ -1,9 +1,14 @@
 """Streamlit boundary; all engineering calculations live in concretecalc."""
 from dataclasses import asdict
+import hashlib
 import json
 from pathlib import Path
 import sys
+from tempfile import TemporaryDirectory
 
+import matplotlib
+# Streamlit renders images in worker threads; never start a native Tk window.
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import streamlit as st
 
@@ -13,6 +18,12 @@ from app.adapters import (DEFAULT_VALUES,mode_b_inputs_from_widgets,report_rows_
 from concretecalc import schemas as s, units as u
 from concretecalc.mode_b import run_mode_b,report_to_dict
 from concretecalc.mix_design import design_mix,to_mode_b_inputs
+from concretecalc.calibration.dataset import load_rows,rows_to_fit_arrays
+from concretecalc.calibration.fit import fit_all
+from concretecalc.calibration.store import save_calibration,load_calibration
+
+ROOT=Path(__file__).resolve().parents[1]
+CALIBRATIONS_DIR=ROOT/'calibrations'
 
 
 def _convert(value: float,kind: str,to_us: bool) -> float:
@@ -264,7 +275,7 @@ def _design_rows(step,number: int,unit_system: str) -> list[dict]:
     return result
 
 
-def mode_a_page(unit_system: str,convention: str,policy: str,normalise: bool) -> None:
+def mode_a_page(unit_system: str,convention: str,policy: str,normalise: bool,constants: dict) -> None:
     """Collect design inputs and render all ten returned steps, without equations."""
     values=material_widgets('a',design=True)
     us=unit_system=='US'
@@ -306,9 +317,77 @@ def mode_a_page(unit_system: str,convention: str,policy: str,normalise: bool) ->
     st.download_button('Download design · JSON (SI)',json.dumps(asdict(design),indent=2),
                        'mix-design.json','application/json')
     if st.button('Predict this design back in Mode B',key='predict_design'):
-        prediction=run_mode_b(to_mode_b_inputs(design),policy=policy,normalise_age_to_28d=normalise)
+        prediction=run_mode_b(to_mode_b_inputs(design),constants=constants,policy=policy,normalise_age_to_28d=normalise)
         st.caption('Comparison uses the selected field moisture convention. Research models may differ from the required mean; durability and cement minimums can raise predicted strength.')
         render_report(prediction,unit_system)
+
+
+def selected_constants() -> dict:
+    """Load user-selected stored parameters at the application boundary."""
+    names=sorted(path.stem for path in CALIBRATIONS_DIR.glob('*.json'))
+    selected=st.sidebar.selectbox('Prediction constants',['Uncalibrated defaults',*names],key='calibrated_set')
+    constants={}
+    if selected!='Uncalibrated defaults':
+        for name in ('abrams','bolomey','feret'):
+            try:
+                constants[name]=load_calibration(selected,name,CALIBRATIONS_DIR)
+            except KeyError:
+                st.sidebar.warning(f'No stored {name} fit; using its uncalibrated default.')
+        st.sidebar.caption('Use only with the materials and test conditions represented by this calibration.')
+    return constants
+
+
+def calibration_page() -> None:
+    """Upload, review errors, choose one material set, fit and save explicit results."""
+    st.header('Calibration')
+    st.caption('CSV and Excel records always use SI units, regardless of display units. Fit statistics describe the supplied rows, not independent validation.')
+    st.download_button('Download SI lab template',(ROOT/'experiments'/'mix_log_template.csv').read_bytes(),
+        'mix_log_template.csv','text/csv')
+    uploaded=st.file_uploader('Lab mix log (CSV or .xlsx)',type=['csv','xlsx'],key='calibration_upload')
+    if uploaded is None:
+        st.info('Upload your lab records to validate and fit. Delete the template’s synthetic rows first; at least three eligible rows are required.')
+        return
+    payload=uploaded.getvalue()
+    data_hash=hashlib.sha256(payload).hexdigest()
+    # The dataset API accepts a path. Keep upload bytes in a temporary boundary
+    # file; only the original name and exact hash enter stored provenance.
+    with TemporaryDirectory(prefix='concretecalc-upload-') as temporary:
+        path=Path(temporary)/('records'+Path(uploaded.name).suffix.lower())
+        path.write_bytes(payload)
+        rows,errors=load_rows(path)
+    st.write(f'{len(rows)} valid rows; {len(errors)} validation errors.')
+    if errors:
+        st.table([{'Row':row,'Column':column,'Message':message} for row,column,message in errors])
+    if not rows:
+        return
+    st.dataframe([asdict(row) for row in rows],hide_index=True)
+    material=st.selectbox('Material set to fit',sorted({row.material_set_id for row in rows}),key='fit_material')
+    age_policy=st.selectbox('Age policy',['only_28d','convert'],key='fit_age_policy',
+        format_func=lambda value:'28-day measurements only' if value=='only_28d' else 'Convert other ages using the literal age equation')
+    selected=tuple(row for row in rows if row.material_set_id==material)
+    eligible=sum(row.age_days==28 or age_policy=='convert' for row in selected)
+    st.caption(f'{len(selected)} rows in this material set; {eligible} eligible for this age policy. Other-age rows are excluded by default.')
+    if age_policy=='convert':
+        st.warning('Age conversion is model-based. Confirm cement type, curing and age-equation validity; actual 28-day measurements remain unchanged.')
+    permission=not errors
+    if errors:
+        permission=st.checkbox('Fit valid rows while excluding the invalid rows shown above',key='fit_valid_subset')
+    context=(data_hash,material,age_policy)
+    if st.button('Fit three strength models',key='fit_models',disabled=eligible<3 or not permission):
+        results=fit_all(rows_to_fit_arrays(selected,age_policy))
+        st.session_state['calibration_fit']=(context,results)
+    saved=st.session_state.get('calibration_fit')
+    if saved is None or saved[0]!=context:
+        return
+    results=saved[1]
+    st.table([{'Model':name,'Rows':result.n_rows,'R²':result.r2,'R² space':result.r2_space,
+        'R² (MPa)':result.r2_mpa,'RMSE (MPa)':result.rmse_mpa,'Constants':str(result.values)}
+        for name,result in results.items()])
+    st.caption('These coefficients are fitted in memory. Predictions acquire calibrated status only when loaded from a saved material-set file.')
+    if st.button('Save fits for this material set',key='save_fits',disabled=not permission):
+        for name,result in results.items():
+            path=save_calibration(material,name,result,uploaded.name,data_hash,CALIBRATIONS_DIR)
+        st.success(f'Saved three models for {material}. Select this set under Prediction constants after refreshing the page.')
 
 
 st.set_page_config(page_title='Concrete research calculator',layout='wide')
@@ -317,14 +396,17 @@ st.info(s.DISCLAIMER)
 unit_system=st.sidebar.selectbox('Unit system',['SI','US'],key='unit_system',on_change=_unit_change)
 convention=st.sidebar.selectbox('Moisture convention',['course','strict'],key='moisture_convention')
 policy=st.sidebar.selectbox('Out-of-range policy',['extrapolate','clamp','raise'],key='policy')
-mode=st.sidebar.selectbox('Mode',['Mode B','Mode A'],key='mode')
+mode=st.sidebar.selectbox('Mode',['Mode B','Mode A','Calibration'],key='mode')
 normalise=st.sidebar.checkbox('Normalize age equation to 28 days',key='normalise_age')
 try:
+    constants=selected_constants()
     if mode=='Mode B':
         values=material_widgets('b')
         inputs=mode_b_inputs_from_widgets(values,unit_system)
-        render_report(run_mode_b(inputs,policy=policy,normalise_age_to_28d=normalise),unit_system)
+        render_report(run_mode_b(inputs,constants=constants,policy=policy,normalise_age_to_28d=normalise),unit_system)
+    elif mode=='Mode A':
+        mode_a_page(unit_system,convention,policy,normalise,constants)
     else:
-        mode_a_page(unit_system,convention,policy,normalise)
-except (ValueError,KeyError,OverflowError) as error:
+        calibration_page()
+except (ValueError,KeyError,OverflowError,OSError) as error:
     st.error(str(error))

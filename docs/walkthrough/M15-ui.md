@@ -47,3 +47,26 @@ the Mode B engine. No independent design equation is implemented in the page.
 Mode A page commit: **652 passed**, full suite, including navigating to Mode A,
 rendering all ten steps, predicting the design back through Mode B and switching
 the design page to US units without exceptions.
+
+## Calibration page
+
+Uploads accept SI CSV/Excel. Every validation error is shown, with valid rows
+retained. Fitting a valid subset requires an explicit checkbox if there are
+errors. Users choose one material set and the age policy; fewer than three
+eligible rows disables fitting. Results include constants, row counts, R2 with
+space, R2 in MPa and MPa RMSE. Changing source bytes/material/age policy hides
+stale fit results. Saving writes the three model payloads through the store.
+
+The prediction-constants sidebar lists stored material sets and loads calibrated
+parameters for Mode B and the Mode A prediction-back action; absent models use
+labelled uncalibrated defaults. Source hashes and warnings remain visible in
+prediction reports. CSV/Excel units stay SI even when the calculator is in US.
+
+Streamlit plotting explicitly uses Matplotlib Agg. The Windows Tk default
+caused an intermittent worker-thread timeout during AppTest; Agg avoids native
+GUI startup. Integration tests exercise upload -> fit -> save with a temporary
+store and selecting a stored model for a prediction, as well as all page smoke
+and unit/air interactions. The engine remains free of UI imports.
+
+Calibration page commit / completed M15: **655 passed**, full suite in project
+Python 3.12 `.venv`, no skips. Three planned page commits, each pushed separately.

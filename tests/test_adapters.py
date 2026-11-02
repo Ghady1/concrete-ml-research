@@ -87,3 +87,69 @@ def test_streamlit_mode_a_and_prediction():
     assert len(app.metric)>=6
     app.sidebar.selectbox(key='unit_system').select('US').run(timeout=45)
     assert not app.exception
+
+
+def test_streamlit_calibration_page():
+    pytest.importorskip('streamlit')
+    from streamlit.testing.v1 import AppTest
+    app=AppTest.from_file(str(Path(__file__).resolve().parents[1]/'app'/'streamlit_app.py'))
+    app.run(timeout=45)
+    app.sidebar.selectbox(key='mode').select('Calibration').run(timeout=45)
+    assert not app.exception
+    assert any('Calibration' in heading.value for heading in app.header)
+
+
+def test_streamlit_upload_fit_and_save(tmp_path,monkeypatch):
+    pytest.importorskip('streamlit')
+    from streamlit.testing.v1 import AppTest
+    from concretecalc.calibration import store
+    real_save=store.save_calibration
+    def save_in_test_directory(material,name,result,source,data_hash,directory):
+        return real_save(material,name,result,source,data_hash,tmp_path)
+    monkeypatch.setattr(store,'save_calibration',save_in_test_directory)
+    root=Path(__file__).resolve().parents[1]
+    with (root/'experiments'/'mix_log_template.csv').open() as source:
+        rows=list(csv.DictReader(source))
+    third=dict(rows[1])
+    third.update(mix_id='synthetic-third',cement_kg_m3='450',measured_strength_mpa='42')
+    rows.append(third)
+    text=io.StringIO(newline='')
+    writer=csv.DictWriter(text,fieldnames=rows[0].keys())
+    writer.writeheader()
+    writer.writerows(rows)
+    app=AppTest.from_file(str(root/'app'/'streamlit_app.py')).run(timeout=45)
+    app.sidebar.selectbox(key='mode').select('Calibration').run(timeout=45)
+    app.file_uploader(key='calibration_upload').set_value(('synthetic.csv',text.getvalue().encode(),'text/csv')).run(timeout=45)
+    assert not app.exception
+    assert not app.button(key='fit_models').disabled
+    app.button(key='fit_models').click().run(timeout=45)
+    assert not app.exception
+    app.button(key='save_fits').click().run(timeout=45)
+    assert not app.exception and len(app.success)==1
+    loaded=store.load_calibration('EXAMPLE-SYNTHETIC-DELETE','abrams',tmp_path)
+    assert loaded.calibrated
+
+
+def test_streamlit_selects_stored_calibration():
+    pytest.importorskip('streamlit')
+    import uuid
+    import numpy as np
+    from streamlit.testing.v1 import AppTest
+    from concretecalc.calibration.fit import fit_abrams
+    from concretecalc.calibration.store import save_calibration
+    root=Path(__file__).resolve().parents[1]
+    material='pytest-'+uuid.uuid4().hex
+    directory=root/'calibrations'
+    path=directory/(material+'.json')
+    assert not path.exists()
+    try:
+        wc=np.array([.3,.4,.5])
+        fit=fit_abrams(wc,100/10**wc)
+        save_calibration(material,'abrams',fit,'synthetic.csv','a'*64,directory)
+        app=AppTest.from_file(str(root/'app'/'streamlit_app.py')).run(timeout=45)
+        app.sidebar.selectbox(key='calibrated_set').select(material).run(timeout=45)
+        assert not app.exception
+        assert any(material in caption.value for caption in app.caption)
+    finally:
+        if path.exists():
+            path.unlink()
