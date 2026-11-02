@@ -91,7 +91,7 @@ test('design steps and named comparison snapshots retain calculated values',asyn
   await expect(page.getByRole('heading',{name:'Compare, with the context intact.'})).toBeVisible();
   await expect(page.getByRole('heading',{name:'First design',exact:true})).toBeVisible();
   await expect(page.getByRole('heading',{name:'Second design',exact:true})).toBeVisible();
-  await expect(page.getByRole('heading',{name:'What changed between these mixes?'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'What changed in the inputs?'})).toBeVisible();
   const shots=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('crs.compare.v1')||'[]'));
   expect(shots).toHaveLength(2);
   expect(shots[0].inputs.specified_fc_mpa).toBe(25);

@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Concrete Research Studio",
-    "version": "0.2.0"
+    "version": "0.3.0"
   },
   "paths": {
     "/api/v1/health": {
@@ -547,6 +547,54 @@
         ],
         "title": "AggregateMoisture"
       },
+      "AnalysisProvenance": {
+        "properties": {
+          "application_version": {
+            "type": "string",
+            "title": "Application Version",
+            "default": "0.3.0"
+          },
+          "engine_package_version": {
+            "type": "string",
+            "title": "Engine Package Version"
+          },
+          "engine_sha256": {
+            "type": "string",
+            "title": "Engine Sha256"
+          },
+          "reference_sha256": {
+            "type": "string",
+            "title": "Reference Sha256"
+          },
+          "parameter_sha256": {
+            "type": "string",
+            "title": "Parameter Sha256"
+          },
+          "input_settings_sha256": {
+            "type": "string",
+            "title": "Input Settings Sha256"
+          },
+          "created_utc": {
+            "type": "string",
+            "title": "Created Utc"
+          },
+          "python_version": {
+            "type": "string",
+            "title": "Python Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "engine_package_version",
+          "engine_sha256",
+          "reference_sha256",
+          "parameter_sha256",
+          "input_settings_sha256",
+          "created_utc",
+          "python_version"
+        ],
+        "title": "AnalysisProvenance"
+      },
       "BatchWeights": {
         "properties": {
           "batch_volume_m3": {
@@ -1041,7 +1089,7 @@
           "schema_version": {
             "type": "integer",
             "title": "Schema Version",
-            "default": 1
+            "default": 2
           },
           "report": {
             "$ref": "#/components/schemas/MixDesignReport"
@@ -1076,13 +1124,17 @@
               }
             ],
             "title": "Prediction Error"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/AnalysisProvenance"
           }
         },
         "type": "object",
         "required": [
           "report",
           "prediction",
-          "visuals"
+          "visuals",
+          "provenance"
         ],
         "title": "DesignResponse"
       },
@@ -2147,19 +2199,23 @@
           "schema_version": {
             "type": "integer",
             "title": "Schema Version",
-            "default": 1
+            "default": 2
           },
           "report": {
             "$ref": "#/components/schemas/StrengthReport"
           },
           "visuals": {
             "$ref": "#/components/schemas/Visuals"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/AnalysisProvenance"
           }
         },
         "type": "object",
         "required": [
           "report",
-          "visuals"
+          "visuals",
+          "provenance"
         ],
         "title": "PredictionResponse"
       },

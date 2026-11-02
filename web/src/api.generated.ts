@@ -119,6 +119,28 @@ export interface components {
       /** Flags */
       flags: components["schemas"]["Flag"][];
     };
+    /** AnalysisProvenance */
+    AnalysisProvenance: {
+      /**
+       * Application Version
+       * @default 0.3.0
+       */
+      application_version?: string;
+      /** Engine Package Version */
+      engine_package_version: string;
+      /** Engine Sha256 */
+      engine_sha256: string;
+      /** Reference Sha256 */
+      reference_sha256: string;
+      /** Parameter Sha256 */
+      parameter_sha256: string;
+      /** Input Settings Sha256 */
+      input_settings_sha256: string;
+      /** Created Utc */
+      created_utc: string;
+      /** Python Version */
+      python_version: string;
+    };
     /** BatchWeights */
     BatchWeights: {
       /** Batch Volume M3 */
@@ -309,7 +331,7 @@ export interface components {
     DesignResponse: {
       /**
        * Schema Version
-       * @default 1
+       * @default 2
        */
       schema_version?: number;
       report: components["schemas"]["MixDesignReport"];
@@ -317,6 +339,7 @@ export interface components {
       visuals: components["schemas"]["Visuals"] | null;
       /** Prediction Error */
       prediction_error?: string | null;
+      provenance: components["schemas"]["AnalysisProvenance"];
     };
     /** DiagnosticPoint */
     DiagnosticPoint: {
@@ -718,11 +741,12 @@ export interface components {
     PredictionResponse: {
       /**
        * Schema Version
-       * @default 1
+       * @default 2
        */
       schema_version?: number;
       report: components["schemas"]["StrengthReport"];
       visuals: components["schemas"]["Visuals"];
+      provenance: components["schemas"]["AnalysisProvenance"];
     };
     /** Proportions */
     Proportions: {

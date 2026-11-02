@@ -5,7 +5,7 @@ import { MaterialCompanion, type MaterialKind } from './material-companion';
 import { ApiError, request, pretty, type Metadata, type Options, type Prediction, type Design, type MixInputs, type ModeAInputs } from './api';
 import { allFields, materialFields, conditionFields, advancedFields, draftFrom, fieldUnit, materialize, switchUnits, type Draft, type Mode, type Unit, type FieldDef } from './form';
 const Results = lazy(() => import('./results'));
-export type Snapshot = { id: string; name: string; mode: Mode; at: string; data: Prediction | Design; inputs: MixInputs | ModeAInputs; options: Options };
+export type Snapshot = { id: string; name: string; description?: string; mode: Mode; at: string; data: Prediction | Design; inputs: MixInputs | ModeAInputs; options: Options };
 const fingerprint = (value: unknown) => JSON.stringify(value, (_, item) => typeof item === 'number' ? Number(item.toPrecision(12)) : item);
 
 export default function Workbench({ mode, metadata }: { mode: Mode; metadata: Metadata }) {

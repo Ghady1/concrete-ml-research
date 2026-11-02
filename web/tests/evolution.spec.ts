@@ -87,3 +87,37 @@ test('Mix Explorer isolates hypothetical inputs and adopts only on request', asy
   await page.getByRole('button', { name: /View last report/ }).click();
   await expect(page.getByRole('status')).toContainText('Inputs changed');
 });
+
+test('notebook renames duplicates undoes removals and imports recorded versions', async ({ page }) => {
+  await page.goto('/#evaluate');
+  await page.getByRole('button', { name: 'Run analysis', exact: true }).click();
+  page.once('dialog', dialog => dialog.accept('Baseline'));
+  await page.getByRole('button', { name: 'Save for comparison', exact: true }).click();
+  await page.getByRole('link', { name: 'Compare snapshots', exact: true }).click();
+  page.once('dialog', dialog => dialog.accept('Reference mix'));
+  await page.getByRole('button', { name: 'Rename 1', exact: true }).click();
+  await page.getByRole('button', { name: 'Duplicate 1', exact: true }).click();
+  await expect(page.locator('.notebook-card')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Remove Reference mix (copy)', exact: true }).click();
+  await expect(page.locator('.notebook-card')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Undo removal' }).click();
+  await expect(page.locator('.notebook-card')).toHaveCount(2);
+  await page.getByRole('checkbox', { name: 'Remember this notebook on this device' }).check();
+  const pending = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export notebook JSON' }).click();
+  const { readFile } = await import('node:fs/promises');
+  const buffer = await readFile((await (await pending).path())!);
+  const notebook = JSON.parse(buffer.toString());
+  expect(notebook.version).toBe(2);
+  expect(notebook.items[0].data.provenance.engine_sha256).toHaveLength(64);
+  const fresh = await page.context().newPage();
+  await fresh.goto('/#compare');
+  await expect(fresh.getByRole('heading', { name: 'Reference mix', exact: true })).toBeVisible();
+  await fresh.close();
+  page.once('dialog', dialog => dialog.accept());
+  await page.getByLabel('Import notebook JSON').setInputFiles({ name: 'notebook.json', mimeType: 'application/json', buffer });
+  await expect(page.locator('.notebook-card')).toHaveCount(2);
+  await page.getByLabel('Import notebook JSON').setInputFiles({ name: 'bad.json', mimeType: 'application/json', buffer: Buffer.from('{"version":2,"items":[{}]}') });
+  await expect(page.getByRole('alert')).toContainText('invalid');
+  await expect(page.locator('.notebook-card')).toHaveCount(2);
+});

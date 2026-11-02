@@ -82,3 +82,17 @@ def test_visual_coverage_and_element_limits_come_from_reference_points(client):
         assert visuals['curve_policy'] == 'extrapolate'
         assert visuals['slump_element_range_mm'] == [25, 100]
         assert sum(point['value'] for point in visuals['volumes']) == pytest.approx(result['report']['volumes']['total_m3'], abs=1e-12)
+
+
+def test_analysis_fingerprints_identify_inputs_parameters_and_runtime(client):
+    inputs = client.get('/api/v1/metadata').json()['defaults_b']
+    first = client.post('/api/v1/predict', json={'inputs': inputs}).json()
+    repeat = client.post('/api/v1/predict', json={'inputs': inputs}).json()
+    assert first['schema_version'] == 2
+    for key in ('engine_sha256', 'reference_sha256', 'parameter_sha256', 'input_settings_sha256'):
+        assert len(first['provenance'][key]) == 64
+        assert first['provenance'][key] == repeat['provenance'][key]
+    inputs['water_kg'] += 10
+    changed = client.post('/api/v1/predict', json={'inputs': inputs}).json()
+    assert first['provenance']['input_settings_sha256'] != changed['provenance']['input_settings_sha256']
+    assert first['provenance']['parameter_sha256'] == changed['provenance']['parameter_sha256']

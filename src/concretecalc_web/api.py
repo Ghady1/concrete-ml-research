@@ -24,6 +24,7 @@ from concretecalc.volumes import absolute_volume_m3,volume_check
 from concretecalc.tables.lookups import air_content_pct
 from .examples import defaults_a,defaults_b,course_examples,synthetic_csv
 from .presentation import Visuals,chart_data
+from .provenance import AnalysisProvenance,analysis_provenance
 
 
 class Options(BaseModel):
@@ -43,17 +44,19 @@ class DesignRequest(BaseModel):
 
 
 class PredictionResponse(BaseModel):
-    schema_version: int=1
+    schema_version: int=2
     report: StrengthReport
     visuals: Visuals
+    provenance: AnalysisProvenance
 
 
 class DesignResponse(BaseModel):
-    schema_version: int=1
+    schema_version: int=2
     report: MixDesignReport
     prediction: StrengthReport | None
     visuals: Visuals | None
     prediction_error: str | None=None
+    provenance: AnalysisProvenance
 
 
 class WorkedExample(BaseModel):
@@ -119,7 +122,7 @@ class FitResponse(BaseModel):
 
 def create_app(calibrations_dir: Path | None=None) -> FastAPI:
     """Create isolated process-local upload/fit caches; persisted fits use existing store."""
-    app=FastAPI(title='Concrete Research Studio',version='0.2.0')
+    app=FastAPI(title='Concrete Research Studio',version='0.3.0')
     directory=calibrations_dir or Path(__file__).resolve().parents[2]/'calibrations'
     datasets: OrderedDict=OrderedDict()
     fits: OrderedDict=OrderedDict()
@@ -171,7 +174,8 @@ def create_app(calibrations_dir: Path | None=None) -> FastAPI:
     @app.post('/api/v1/predict',response_model=PredictionResponse)
     def predict(body: PredictRequest):
         report=run_mode_b(body.inputs,constants(body.options),body.options.policy,body.options.normalise_age_to_28d)
-        return PredictionResponse(report=report,visuals=chart_data(report,body.options.normalise_age_to_28d))
+        return PredictionResponse(report=report,visuals=chart_data(report,body.options.normalise_age_to_28d),
+            provenance=analysis_provenance(asdict(body.inputs),body.options.model_dump(),report.predictions))
 
     @app.post('/api/v1/design',response_model=DesignResponse)
     def design(body: DesignRequest):
@@ -179,9 +183,11 @@ def create_app(calibrations_dir: Path | None=None) -> FastAPI:
         try:
             prediction=run_mode_b(to_mode_b_inputs(report),constants(body.options),body.options.policy,body.options.normalise_age_to_28d)
         except ValueError as error:
-            return DesignResponse(report=report,prediction=None,visuals=None,prediction_error=str(error))
+            return DesignResponse(report=report,prediction=None,visuals=None,prediction_error=str(error),
+                provenance=analysis_provenance(asdict(body.inputs),body.options.model_dump(),{}))
         return DesignResponse(report=report,prediction=prediction,
-            visuals=chart_data(prediction,body.options.normalise_age_to_28d,report.wc.fcr.fcr_mpa))
+            visuals=chart_data(prediction,body.options.normalise_age_to_28d,report.wc.fcr.fcr_mpa),
+            provenance=analysis_provenance(asdict(body.inputs),body.options.model_dump(),prediction.predictions))
 
     @app.get('/api/v1/calibrations')
     def list_calibrations():

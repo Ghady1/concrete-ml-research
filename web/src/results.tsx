@@ -5,6 +5,7 @@ import { download, fmt, pretty, type Report, type Metadata, type Design, type Mi
 import { PageHeading, Section, Toggle } from './components';
 import type { Snapshot } from './workbench';
 import type { Unit } from './form';
+import { getSnapshots, putSnapshots } from './snapshot-store';
 import { saveFigure, tableCSV } from './chart-export';
 import { Diagnostics } from './diagnostics';
 import { EngineeringNotes, ResearchContext } from './engineering-notes';
@@ -44,14 +45,18 @@ export default function Results({ snapshot, unit, metadata, onAdopt }: { snapsho
   const mass = (value: number) => value / (us ? c.KG_M3_PER_LB_YD3 : 1);
   const length = (value: number) => value / (us ? c.MM_PER_IN : 1);
   const stressUnit = us ? 'psi' : 'MPa', massUnit = us ? 'lb/yd³' : 'kg/m³', lengthUnit = us ? 'in' : 'mm';
+  const [saveError, setSaveError] = useState('');
   const saveSnapshot = () => {
-    const items: Snapshot[] = JSON.parse(sessionStorage.getItem('crs.compare.v1') || '[]');
-    if (!items.find(x => x.id === snapshot.id)) {
-      if (items.length >= 3) { alert('Three snapshots are already saved. Open Compare and remove one first.'); return; }
-      const name = prompt('Name this calculated snapshot', snapshot.name); if (!name) return;
-      sessionStorage.setItem('crs.compare.v1', JSON.stringify([...items, { ...snapshot, name }]));
-    }
-    setSaved(true);
+    try {
+      const items = getSnapshots();
+      if (!items.find(item => item.id === snapshot.id)) {
+        if (items.length >= 3) throw new Error('Three snapshots are already saved. Open Compare and remove one first.');
+        const name = prompt('Name this calculated snapshot', snapshot.name); if (!name) return;
+        if (name.length > 120) throw new Error('Use a name of at most 120 characters.');
+        putSnapshots([...items, { ...snapshot, name }]);
+      }
+      setSaved(true); setSaveError('');
+    } catch (error) { setSaveError(error instanceof Error ? error.message : 'Notebook storage is unavailable. Export JSON to keep this analysis.'); }
   };
   const csv = () => {
     const rows = [['section', 'quantity', 'value', 'unit'], ['snapshot', 'calculated_at', snapshot.at, 'UTC'], ['notice', 'disclaimer', metadata.disclaimer, '']];
@@ -71,8 +76,8 @@ export default function Results({ snapshot, unit, metadata, onAdopt }: { snapsho
   const allTabs = ['Overview', 'Strength', 'Water and workability', 'Composition and checks', ...(design ? ['Design steps'] : [])];
   return <article className="results"><PageHeading eyebrow={snapshot.mode === 'design' ? 'Design / calculated snapshot' : 'Evaluation / calculated snapshot'} title="A clearer picture of your mix.">Calculated {new Date(snapshot.at).toLocaleString()} · full-precision SI snapshot · {snapshot.options.calibration_id || 'uncalibrated project defaults'}</PageHeading>
     <div className="actions report-actions no-print"><button className="button small" onClick={() => setExploring(!exploring)}>{exploring ? 'Close Mix Explorer' : 'Open Mix Explorer'}</button><button className="button small" onClick={saveSnapshot}><BookmarkPlus size={16}/>{saved ? 'Saved for comparison' : 'Save for comparison'}</button><a className="text-link" href="#compare">Compare snapshots <ArrowRight size={15}/></a><button className="button small" onClick={() => download('research-report-si.json', JSON.stringify(snapshot, null, 2))}>JSON · SI</button><button className="button small" onClick={csv}>CSV · SI</button><button className="button small" onClick={printReport}><Printer size={15}/> Print / PDF</button></div>
-    <div className="no-print">{printing && <p role="status">Print layout prepared. All report sections are visible. <button className="text-link bare" onClick={() => setPrinting(false)}>Return to tab view</button></p>}</div><div className="result-summary"><div><span>Effective water / cement</span><strong>{fmt(report.wc, 4)}</strong><small>w/cm {fmt(report.wcm, 4)}</small></div><div><span>Effective water</span><strong>{fmt(mass(report.water.effective_water_kg))}<small> {massUnit}</small></strong><small>added + signed aggregate contributions</small></div><div><span>Workability method</span><strong>{unsupportedWorkability ? 'Unsupported' : 'Heuristic'}</strong><small>Water-table inversion; inspect limitations below.</small></div><div><span>{design ? 'Governing constraint' : 'Air content'}</span><strong>{design ? pretty(design.governing_constraint) : fmt(report.air_pct) + '%'}</strong><small>{design ? 'No silent adjustment to specified strength' : report.air_source.replaceAll('_', ' ')}</small></div></div>
-    <details className="input-record" open={printing || undefined}><summary>Calculated input snapshot · canonical SI</summary><p>These are the submitted quantities and settings for this analysis. Later draft edits do not change this record.</p><ObjectTable value={{ inputs: snapshot.inputs, options: snapshot.options }}/></details><ResearchContext report={report}/><EngineeringNotes report={report}/>
+    <div className="no-print">{saveError && <p className="notice error" role="alert">{saveError}</p>}{printing && <p role="status">Print layout prepared. All report sections are visible. <button className="text-link bare" onClick={() => setPrinting(false)}>Return to tab view</button></p>}</div><div className="result-summary"><div><span>Effective water / cement</span><strong>{fmt(report.wc, 4)}</strong><small>w/cm {fmt(report.wcm, 4)}</small></div><div><span>Effective water</span><strong>{fmt(mass(report.water.effective_water_kg))}<small> {massUnit}</small></strong><small>added + signed aggregate contributions</small></div><div><span>Workability method</span><strong>{unsupportedWorkability ? 'Unsupported' : 'Heuristic'}</strong><small>Water-table inversion; inspect limitations below.</small></div><div><span>{design ? 'Governing constraint' : 'Air content'}</span><strong>{design ? pretty(design.governing_constraint) : fmt(report.air_pct) + '%'}</strong><small>{design ? 'No silent adjustment to specified strength' : report.air_source.replaceAll('_', ' ')}</small></div></div>
+    <details className="input-record" open={printing || undefined}><summary>Calculated input snapshot · canonical SI</summary><p>These are the submitted quantities and settings for this analysis. Later draft edits do not change this record.</p><ObjectTable value={{ inputs: snapshot.inputs, options: snapshot.options, provenance: snapshot.data.provenance || 'Legacy analysis: version fingerprints were not recorded.' }}/></details><ResearchContext report={report}/><EngineeringNotes report={report}/>
     <div className="result-tabs no-print" role="tablist" aria-label="Result views">{allTabs.map(name => <button key={name} role="tab" aria-selected={tab === name} onClick={() => setTab(name)}>{name}</button>)}</div>
     <div className={(printing || tab === 'Overview') ? 'result-view' : 'result-view print-only'}>
       <div className="chart-grid"><Chart title="Four perspectives on strength" note={`Estimated 28-day mean · ${stressUnit}. Model disagreement is not a confidence interval.`} rows={strengths}>
