@@ -1,0 +1,114 @@
+import { useRef, useState, type ReactNode } from 'react';
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, ReferenceDot, BarChart, Bar, ScatterChart, Scatter, Cell } from 'recharts';
+import { Download, Printer, BookmarkPlus, ArrowRight } from 'lucide-react';
+import { download, fmt, pretty, type Report, type Metadata, type Design } from './api';
+import { PageHeading, Section, Toggle } from './components';
+import type { Snapshot } from './workbench';
+import type { Unit } from './form';
+
+const colors = ['#2a6257', '#596f89', '#a45436', '#94721b', '#8c9382', '#b3c6b2'];
+const modelName = (name: string) => name === 'aci_table' ? 'ACI table' : pretty(name);
+export function Chart({ title, note, rows, children }: { title: string; note: string; rows: Record<string, unknown>[]; children: ReactNode }) {
+  const container = useRef<HTMLElement>(null);
+  const saveImage = () => {
+    const source = container.current?.querySelector('svg.recharts-surface') || container.current?.querySelector('svg');
+    if (!source) return;
+    const svg = source.cloneNode(true) as SVGElement;
+    svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    svg.setAttribute('style', 'background:#fffefb;font-family:Arial,sans-serif;font-size:12px');
+    const rect = source.getBoundingClientRect(); svg.setAttribute('width', String(rect.width)); svg.setAttribute('height', String(rect.height));
+    download(title.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-') + '.svg', new XMLSerializer().serializeToString(svg), 'image/svg+xml');
+  };
+  const keys = rows.length ? Object.keys(rows[0]) : [];
+  return <figure className="chart-panel" ref={container}><div className="chart-heading"><h3>{title}</h3><button className="icon-button no-print" onClick={saveImage} aria-label={'Download ' + title + ' image'}><Download size={17}/></button></div>
+    <p className="caption">{note}</p><div className="chart-canvas" role="img" aria-label={title}>{rows.length ? children : <p>No numerical values are available for this view.</p>}</div>
+    <details className="data-table"><summary>View numerical data</summary><div className="table-scroll"><table><thead><tr>{keys.map(k => <th key={k}>{pretty(k)}</th>)}</tr></thead><tbody>{rows.map((row, i) => <tr key={i}>{keys.map(k => <td key={k}>{typeof row[k] === 'number' ? fmt(row[k] as number, 5) : String(row[k] ?? 'Unavailable')}</td>)}</tr>)}</tbody></table></div></details></figure>;
+}
+export function Flags({ flags }: { flags: Report['flags'] }) {
+  const grouped = new Map<string, typeof flags>();
+  for (const flag of flags) { const key = flag.severity + ':' + flag.code; grouped.set(key, [...(grouped.get(key) || []), flag]); }
+  return <section className="checks"><h2>Checks & context</h2><p>Research estimates are most useful when their assumptions stay visible.</p>
+    {[...grouped].sort((a, b) => ['error', 'warning', 'info'].indexOf(a[1][0].severity) - ['error', 'warning', 'info'].indexOf(b[1][0].severity)).map(([key, group]) => <details key={key} className={'flag ' + group[0].severity}><summary><span>{pretty(group[0].code)}</span><small>{group[0].severity}{group.length > 1 ? ` · ${group.length} notices` : ''}</small></summary>{group.map((flag, i) => <p key={i}>{flag.message}</p>)}</details>)}</section>;
+}
+export function reportOf(snapshot: Snapshot): Report | null {
+  return snapshot.mode === 'design' ? (snapshot.data as Design).prediction : (snapshot.data as { report: Report }).report;
+}
+export default function Results({ snapshot, unit, metadata }: { snapshot: Snapshot; unit: Unit; metadata: Metadata }) {
+  const [tab, setTab] = useState('Overview');
+  const [models, setModels] = useState(['aci_table', 'abrams', 'bolomey', 'feret']);
+  const [otherAir, setOtherAir] = useState(false), [saved, setSaved] = useState(false);
+  const report = reportOf(snapshot); const visuals = snapshot.data.visuals;
+  const design = snapshot.mode === 'design' ? (snapshot.data as Design).report : null;
+  const us = unit === 'US', c = metadata.conversion_factors;
+  const stress = (value: number) => value / (us ? c.MPA_PER_PSI : 1);
+  const mass = (value: number) => value / (us ? c.KG_M3_PER_LB_YD3 : 1);
+  const length = (value: number) => value / (us ? c.MM_PER_IN : 1);
+  const stressUnit = us ? 'psi' : 'MPa', massUnit = us ? 'lb/yd³' : 'kg/m³', lengthUnit = us ? 'in' : 'mm';
+  const saveSnapshot = () => {
+    const items: Snapshot[] = JSON.parse(sessionStorage.getItem('crs.compare.v1') || '[]');
+    if (!items.find(x => x.id === snapshot.id)) {
+      if (items.length >= 3) { alert('Three snapshots are already saved. Open Compare and remove one first.'); return; }
+      const name = prompt('Name this calculated snapshot', snapshot.name); if (!name) return;
+      sessionStorage.setItem('crs.compare.v1', JSON.stringify([...items, { ...snapshot, name }]));
+    }
+    setSaved(true);
+  };
+  const csv = () => {
+    const rows = [['section', 'quantity', 'value', 'unit'], ['snapshot', 'calculated_at', snapshot.at, 'UTC'], ['notice', 'disclaimer', metadata.disclaimer, '']];
+    function collect(value: unknown, path: string) { if (value && typeof value === 'object') for (const [key, item] of Object.entries(value)) collect(item, path + '.' + key); else rows.push(['report', path, String(value ?? ''), 'canonical SI']); }
+    collect(snapshot, 'snapshot');
+    download('research-report-si.csv', rows.map(row => row.map(value => '"' + value.replaceAll('"', '""') + '"').join(',')).join('\r\n'), 'text/csv');
+  };
+  if (!report || !visuals) return <><PageHeading eyebrow="Design report" title="This design needs attention."/><Flags flags={design?.flags || []}/><p className="notice error">{(snapshot.data as Design).prediction_error || 'A prediction is unavailable for this input.'}</p><details><summary>Complete design data</summary><pre>{JSON.stringify(snapshot.data.report, null, 2)}</pre></details></>;
+  const strengths = visuals.strengths.filter(x => x.value != null).map(x => ({ model: modelName(x.name), [`mean (${stressUnit})`]: stress(x.value!), value: stress(x.value!) }));
+  const strengthAxis = `mean (${stressUnit})`;
+  const curves = report.plot.model_curves.aci_table.map((point, i) => Object.fromEntries([['wc', point[0]], ...Object.entries(report.plot.model_curves).map(([name, points]) => [name, points[i]?.[1] == null ? null : stress(points[i][1]!)])])) as Record<string, number>[];
+  const ages = visuals.ages.map(row => ({ age_days: row.age_days, ...Object.fromEntries(Object.entries(row.values).map(([name, value]) => [name, value == null ? null : stress(value)])) }));
+  const volumeRows = [Object.fromEntries(visuals.volumes.map(x => [x.name, x.value]))];
+  let cumulative = 0;
+  const water = visuals.water.map((x, index) => { const v = mass(x.value || 0); const start = index === 3 ? 0 : cumulative; const end = index === 3 ? v : cumulative + v; cumulative = end; return { component: x.name, [`signed (${massUnit})`]: v, range: [Math.min(start, end), Math.max(start, end)], value: v }; });
+  const allTabs = ['Overview', 'Strength', 'Water and workability', 'Composition and checks', ...(design ? ['Design steps'] : [])];
+  return <article className="results"><PageHeading eyebrow={snapshot.mode === 'design' ? 'Design / calculated snapshot' : 'Evaluation / calculated snapshot'} title="A clearer picture of your mix.">Calculated {new Date(snapshot.at).toLocaleString()} · full-precision SI snapshot · {snapshot.options.calibration_id || 'uncalibrated project defaults'}</PageHeading>
+    <div className="actions report-actions no-print"><button className="button small" onClick={saveSnapshot}><BookmarkPlus size={16}/>{saved ? 'Saved for comparison' : 'Save for comparison'}</button><a className="text-link" href="#compare">Compare snapshots <ArrowRight size={15}/></a><button className="button small" onClick={() => download('research-report-si.json', JSON.stringify(snapshot, null, 2))}>JSON · SI</button><button className="button small" onClick={csv}>CSV · SI</button><button className="button small" onClick={() => window.print()}><Printer size={15}/> Print / PDF</button></div>
+    <div className="result-summary"><div><span>Effective water / cement</span><strong>{fmt(report.wc, 4)}</strong><small>w/cm {fmt(report.wcm, 4)}</small></div><div><span>Effective water</span><strong>{fmt(mass(report.water.effective_water_kg))}<small> {massUnit}</small></strong><small>added + signed aggregate contributions</small></div><div><span>Estimated slump</span><strong>{fmt(report.slump.slump_mm == null ? null : length(report.slump.slump_mm))}<small> {lengthUnit}</small></strong><small>placeholder band ±{fmt(length(report.slump.band_mm))}</small></div><div><span>{design ? 'Governing constraint' : 'Air content'}</span><strong>{design ? pretty(design.governing_constraint) : fmt(report.air_pct) + '%'}</strong><small>{design ? 'No silent adjustment to specified strength' : report.air_source.replaceAll('_', ' ')}</small></div></div>
+    <div className="result-tabs no-print" role="tablist" aria-label="Result views">{allTabs.map(name => <button key={name} role="tab" aria-selected={tab === name} onClick={() => setTab(name)}>{name}</button>)}</div>
+    <div className={tab === 'Overview' ? 'result-view' : 'result-view print-only'}>
+      <div className="chart-grid"><Chart title="Four perspectives on strength" note={`Estimated 28-day mean · ${stressUnit}. Model disagreement is not a confidence interval.`} rows={strengths}>
+        <ResponsiveContainer width="100%" height="100%"><BarChart data={strengths} layout="vertical" margin={{ left: 15, right: 30 }}><CartesianGrid stroke="#e6e8df" horizontal={false}/><XAxis type="number"/><YAxis dataKey="model" type="category" width={90}/><Tooltip/><Bar dataKey={strengthAxis} fill={colors[0]} barSize={13} label={{ position: 'right', formatter: (v: unknown) => fmt(Number(v), 1) }}/>{visuals.required_mean_mpa != null && <ReferenceLine x={stress(visuals.required_mean_mpa)} stroke={colors[2]} strokeDasharray="5 4" label="Required"/>}</BarChart></ResponsiveContainer>
+      </Chart><Chart title="Where the volume goes" note={`Absolute volume per unit concrete volume. Total ${fmt(report.volumes.total_m3, 4)}; the line marks 1.0. The result is not normalized.`} rows={volumeRows}>
+        <ResponsiveContainer width="100%" height="100%"><BarChart data={[{ mix: 'This mix', ...volumeRows[0] }]} layout="vertical"><XAxis type="number" domain={[0, Math.max(1.1, report.volumes.total_m3 + .05)]}/><YAxis type="category" dataKey="mix" hide/><Tooltip/><Legend/>{visuals.volumes.map((x, i) => <Bar key={x.name} dataKey={x.name} stackId="volume" fill={colors[i]}/>)}<ReferenceLine x={1} stroke="#25332f" strokeWidth={2}/></BarChart></ResponsiveContainer>
+      </Chart></div><Flags flags={[...report.flags, ...(design?.flags || [])]}/>
+    </div>
+    <div className={tab === 'Strength' ? 'result-view' : 'result-view print-only'}><div className="model-toggles no-print">{Object.keys(report.predictions).map(name => <Toggle key={name} label={modelName(name)} checked={models.includes(name)} onChange={yes => setModels(yes ? [...models, name] : models.filter(x => x !== name))}/>)}<Toggle label="Other air-condition reference points" checked={otherAir} onChange={setOtherAir}/></div>
+      <Chart title="Strength and water–cement ratio" note={`${stressUnit}; cylinder-basis 28-day means. Curves vary cement at fixed water, air and cement SG. Current mix w/c is marked.`} rows={curves}>
+        <ResponsiveContainer width="100%" height="100%"><LineChart data={curves}><CartesianGrid stroke="#e6e8df"/><XAxis dataKey="wc" type="number" domain={['dataMin', 'dataMax']} tickFormatter={v => Number(v).toFixed(2)}/><YAxis/><Tooltip/><Legend/>{models.map((name, i) => <Line key={name} dataKey={name} name={modelName(name)} stroke={colors[Object.keys(report.predictions).indexOf(name)]} strokeWidth={2} dot={false} isAnimationActive={false}/>)}
+          {(report.inputs.air_entrained ? report.plot.aci_ae_points : report.plot.aci_non_ae_points).map((p,i)=><ReferenceDot key={'reference-'+i} x={p[0]} y={stress(p[1])} r={4} fill="#25332f" stroke="#fffefb" ifOverflow="extendDomain"/>)}
+          {otherAir && (report.inputs.air_entrained ? report.plot.aci_non_ae_points : report.plot.aci_ae_points).map((p,i)=><ReferenceDot key={'other-'+i} x={p[0]} y={stress(p[1])} r={3} fill="#b6bcb0" ifOverflow="extendDomain"/>)}
+          {Object.entries(report.predictions).filter(([name,p])=>models.includes(name)&&p.mean_28d_mpa!=null).map(([name,p],i)=><ReferenceDot key={name} x={report.wc} y={stress(p.mean_28d_mpa!)} r={5} fill={colors[Object.keys(report.predictions).indexOf(name)]} stroke="#fffefb" ifOverflow="extendDomain"/>)}
+          <ReferenceLine x={report.wc} stroke="#777" strokeDasharray="4 4"/></LineChart></ResponsiveContainer>
+      </Chart><div className="reference-points"><strong>{report.inputs.air_entrained ? 'Air-entrained' : 'Non-air-entrained'} reference table points ({stressUnit})</strong><p>{(report.inputs.air_entrained ? report.plot.aci_ae_points : report.plot.aci_non_ae_points).map(p => `${fmt(p[0], 3)} → ${fmt(stress(p[1]))}`).join(' · ')}</p>{otherAir && <p>Other air condition: {(report.inputs.air_entrained ? report.plot.aci_non_ae_points : report.plot.aci_ae_points).map(p => `${fmt(p[0], 3)} → ${fmt(stress(p[1]))}`).join(' · ')}</p>}</div>
+      <Chart title="Strength development with age" note={`${stressUnit} versus days. ${snapshot.options.normalise_age_to_28d ? 'Normalized to 28 days' : 'Literal age equation; the factor at 28 days is not exactly one'}. This is model-based, not a measured curing history.`} rows={ages}>
+        <ResponsiveContainer width="100%" height="100%"><LineChart data={ages}><CartesianGrid stroke="#e6e8df"/><XAxis dataKey="age_days" type="number" domain={['dataMin', 'dataMax']}/><YAxis/><Tooltip/><Legend/>{models.map(name => <Line key={name} dataKey={name} stroke={colors[Object.keys(report.predictions).indexOf(name)]} dot={false} isAnimationActive={false}/>)}<ReferenceLine x={report.inputs.age_days} stroke="#777" strokeDasharray="4 4"/></LineChart></ResponsiveContainer>
+      </Chart><Section title="Values, with their provenance"><div className="table-scroll"><table><thead><tr><th>Model</th><th>28-day mean ({stressUnit})</th><th>Selected age</th><th>Characteristic estimate</th><th>Cube equivalent</th></tr></thead><tbody>{Object.entries(report.predictions).map(([name, prediction]) => <tr key={name}><td>{modelName(name)}</td>{[prediction.mean_28d_mpa, report.age_adjusted[name]?.strength_mpa, report.characteristic[name]?.fc_est_mpa, report.cube_equivalent_mpa[name]].map((value, i) => <td key={i}>{fmt(value == null ? null : stress(value))}</td>)}</tr>)}</tbody></table></div>{Object.entries(report.predictions).map(([name, prediction]) => <details key={name} className="source-row"><summary>{modelName(name)} · {prediction.calibrated ? 'calibrated' : 'uncalibrated'}</summary><p>{prediction.constants_source}</p><pre>{JSON.stringify(prediction.constants_used, null, 2)}</pre></details>)}</Section>
+    </div>
+    <div className={tab === 'Water and workability' ? 'result-view' : 'result-view print-only'}><Chart title="Follow the water" note={`Signed contributions in ${massUnit}. Water below SSD is absorbed; negative contributions are preserved.`} rows={water.map(({ range, ...row }) => row)}>
+      <ResponsiveContainer width="100%" height="100%"><BarChart data={water}><CartesianGrid stroke="#e6e8df" vertical={false}/><XAxis dataKey="component" tick={{ fontSize: 11 }}/><YAxis/><Tooltip formatter={(_value, _name, item) => fmt(item.payload.value) + ' ' + massUnit}/><ReferenceLine y={0} stroke="#25332f"/><Bar dataKey="range" fill={colors[0]} barSize={45}>{water.map((point,i)=><Cell key={i} fill={point.value<0?colors[2]:i===3?colors[1]:colors[0]}/>)}</Bar></BarChart></ResponsiveContainer>
+    </Chart><Chart title="A view of workability" note={`Schematic illustration only; not a physical slump simulation. Estimate and placeholder band in ${lengthUnit}; the band is not a confidence interval.`} rows={[{ estimate: report.slump.slump_mm == null ? null : length(report.slump.slump_mm), lower: report.slump.lower_mm == null ? null : length(report.slump.lower_mm), upper: report.slump.upper_mm == null ? null : length(report.slump.upper_mm), trial_tolerance: length(report.slump.trial_tolerance_mm) }]}>
+      <div className="slump-illustration"><svg viewBox="0 0 390 160" role="img" aria-label="Illustrative slump cone"><path d="M50 135 85 30H130L165 135Z" fill="#e4e7db" stroke="#6c8272" strokeWidth="2"/><path d="M210 135Q215 88 250 90Q282 82 300 135Z" fill="#b8c4b0" stroke="#6c8272" strokeWidth="2"/><path d="M25 140H335M85 28H345" fill="none" stroke="#89958b" strokeDasharray="5 4"/><path d="M330 35V88" fill="none" stroke="#a45436" strokeWidth="2"/><text x="340" y="70" fill="#25332f" fontSize="14">Δh</text></svg><strong>{fmt(report.slump.slump_mm == null ? null : length(report.slump.slump_mm))} {lengthUnit}</strong><p>Air {fmt(report.air_pct)}% · {pretty(report.inputs.coarse.shape)}</p><small>See the workability flags for element-range and extrapolation checks.</small></div>
+    </Chart></div>
+    <div className={tab === 'Composition and checks' ? 'result-view' : 'result-view print-only'}><div className="chart-grid">
+      <Chart title="Density: mix and reference" note={`Fresh density (${us ? 'pcf' : 'kg/m³'}). Deviation ${fmt(report.unit_weight.deviation_pct)}%.`} rows={[{ name: 'Computed', value: report.unit_weight.computed_kg_m3 / (us ? c.KG_M3_PER_PCF : 1) }, { name: 'ACI reference', value: report.unit_weight.aci_kg_m3 == null ? null : report.unit_weight.aci_kg_m3 / (us ? c.KG_M3_PER_PCF : 1) }]}><ResponsiveContainer width="100%" height="100%"><BarChart data={[{ name: 'Computed', value: report.unit_weight.computed_kg_m3 / (us ? c.KG_M3_PER_PCF : 1) }, { name: 'ACI', value: report.unit_weight.aci_kg_m3 == null ? null : report.unit_weight.aci_kg_m3 / (us ? c.KG_M3_PER_PCF : 1) }]}><XAxis dataKey="name"/><YAxis/><Tooltip/><Bar dataKey="value" fill={colors[1]}/></BarChart></ResponsiveContainer></Chart>
+      <Chart title="Coarse aggregate packing" note={`Dry-rodded bulk ratio (dimensionless). Deviation ${fmt(report.indicators.coarse_bulk_ratio_deviation_pct)}%.`} rows={[{ name: 'Actual', value: report.indicators.coarse_bulk_ratio_actual }, { name: 'Reference', value: report.indicators.coarse_bulk_ratio_table }]}><ResponsiveContainer width="100%" height="100%"><BarChart data={[{ name: 'Actual', value: report.indicators.coarse_bulk_ratio_actual }, { name: 'Reference', value: report.indicators.coarse_bulk_ratio_table }]}><XAxis dataKey="name"/><YAxis/><Tooltip/><Bar dataKey="value" fill={colors[2]}/></BarChart></ResponsiveContainer></Chart></div>
+      <div className="definition"><p>Paste volume fraction {fmt(report.indicators.paste_volume_m3, 4)} · Fine fraction by mass {fmt(report.indicators.fine_fraction_by_mass, 4)} · by volume {fmt(report.indicators.fine_fraction_by_volume, 4)} · implied air {fmt(report.volumes.implied_air_pct)}%</p>{report.air_entrainer_dosage_ml_m3 != null && <p>Product-specific air-entrainer dosage {fmt(report.air_entrainer_dosage_ml_m3)} ml/m³.</p>}</div><Flags flags={report.flags}/>
+    </div>
+    {design && <div className={tab === 'Design steps' ? 'result-view' : 'result-view print-only'}><div className="definition"><strong>What governed this design?</strong><p>Required mean {fmt(stress(design.wc.fcr.fcr_mpa))} {stressUnit}; strength w/c {fmt(design.wc.wc_strength, 4)}; durability w/c {fmt(design.wc.wc_durability, 4)}; final w/c {fmt(design.cement.wc_final, 4)}. Governing constraint: {pretty(design.governing_constraint)}.</p></div><div className="table-scroll"><table><thead><tr><th>Model</th><th>Required mean ({stressUnit})</th><th>Predicted mean</th><th>Signed difference</th></tr></thead><tbody>{Object.entries(report.predictions).map(([name, p]) => <tr key={name}><td>{modelName(name)}</td><td>{fmt(stress(design.wc.fcr.fcr_mpa))}</td><td>{fmt(p.mean_28d_mpa == null ? null : stress(p.mean_28d_mpa))}</td><td>{fmt(p.mean_28d_mpa == null ? null : stress(p.mean_28d_mpa - design.wc.fcr.fcr_mpa))}</td></tr>)}</tbody></table></div>
+      {['slump', 'nmas', 'water_air', 'wc', 'cement', 'coarse', 'fine', 'field', 'proportions', 'batch'].map((name, i) => <details key={name} className="design-step" open={i === 7 || i === 9}><summary><span className="step-num">{String(i + 1).padStart(2, '0')}</span>{pretty(name)}</summary><ObjectTable value={(design as unknown as Record<string, unknown>)[name]}/>{name === 'field' && <><h3>Other convention: {design.field_other_convention.convention}</h3><ObjectTable value={design.field_other_convention}/></>}</details>)}<p className="caption">Detailed step tables and batch guidance use the explicitly labelled canonical SI units. Strength comparisons and principal charts follow the display-unit selector.</p></div>}
+    <div className="print-disclaimer">{metadata.disclaimer}<br/>Reference values are not primary-verified. Synthetic examples are not laboratory evidence.</div>
+  </article>;
+}
+function ObjectTable({ value }: { value: unknown }) {
+  const rows: [string, unknown][] = [];
+  function visit(item: unknown, prefix: string) { if (item && typeof item === 'object' && !Array.isArray(item)) for (const [key, val] of Object.entries(item)) { if (key !== 'flags') visit(val, prefix ? prefix + ' / ' + key : key); } else rows.push([prefix, item]); }
+  visit(value, '');
+  return <div className="table-scroll"><table><thead><tr><th>Quantity · canonical SI</th><th>Value</th></tr></thead><tbody>{rows.map(([key, val]) => <tr key={key}><td>{pretty(key)}</td><td>{typeof val === 'number' ? fmt(val, 5) : Array.isArray(val) ? val.join(' · ') : String(val ?? 'Not applicable')}</td></tr>)}</tbody></table></div>;
+}
