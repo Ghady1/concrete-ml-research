@@ -34,6 +34,7 @@ Every choice not dictated by the task text. Each one is a default the owner can 
 - **A-11** Sigma given but n missing: F = 1.00 (as if n >= 30) + warning flag (Q31).
 
 ## Mode B physics
+- **A-47** Mode B air-entrainer dosage is reported for AE mixes only. It uses an explicitly supplied rate or otherwise the JSON slide rate, always with the product-specific warning. A partial model-constants mapping overrides only named models; unknown model keys raise. Nonpositive effective water after absorption raises instead of feeding an invalid ratio to strength models. Plot curves use the model's extrapolated research curve independently of the report's table policy.
 - **A-26** No extra air term in Abrams/Bolomey (to avoid double counting). AE vs non-AE use separate constant sets / the AE table column. Feret is the explicit air-aware model. (Required by the task to be logged.)
 - **A-09** CA void content uses SG_OD = SG_SSD / (1 + Abs/100) (Q22).
 - **A-10** Flag thresholds are placeholders (Q15): volume closure |e| > 0.02 m3 warning, > 0.05 m3 error; unit weight deviation > 5 %; b/b0 deviation > +-10 %; model spread > 5 MPa; slump band +-25 mm.

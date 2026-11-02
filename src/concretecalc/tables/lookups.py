@@ -56,6 +56,13 @@ def model_presets() -> tuple[dict, ...]:
     return load_presets()
 
 
+def strength_table_points(air_entrained: bool) -> tuple[tuple[float, float], ...]:
+    """Available (w/c, mean MPa) reference points for fit/plot consumers."""
+    table = load_series('wc_vs_strength')
+    column = table.columns[_ae_column(air_entrained)]
+    return tuple((float(wc), float(strength)) for wc, strength in zip(column, table.x) if math.isfinite(wc))
+
+
 def required_strength_rules() -> dict[str, float]:
     """Return a copy of the course required-average-strength rules (PLAN M08)."""
     return dict(load_mapping('required_strength_rules').values)
