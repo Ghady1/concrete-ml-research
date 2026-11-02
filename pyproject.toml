@@ -11,7 +11,7 @@ requires-python = ">=3.10"
 dependencies = ["numpy"]
 
 [project.optional-dependencies]
-dev = ["pytest", "hypothesis"]
+dev = ["pytest", "hypothesis", "pytest-cov"]
 calibration = ["pandas", "openpyxl"]
 app = ["streamlit", "matplotlib"]
 

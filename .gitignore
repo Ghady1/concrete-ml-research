@@ -23,3 +23,13 @@ models/*
 
 # VS Code
 .vscode/
+
+# Local calibration records and verification output
+calibrations/*.json
+calibrations/*.tmp
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+build/
+dist/

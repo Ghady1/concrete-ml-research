@@ -1,8 +1,20 @@
-# PLAN.md - `concretecalc` build plan (Phase 1, awaiting owner approval)
+# PLAN.md - `concretecalc` approved build plan
 
 Status: approved (owner decisions 2026-11-01). M01-M04 delivered by Claude Code;
-M05-M15 delivered (655 tests passing on Python 3.12, including Excel and UI). Owner authorized continued implementation and
+M05-M16 complete (655 tests passing on Python 3.12, including Excel and UI;
+96% statement coverage). Owner authorized continued implementation and
 a push after each completed milestone on 2026-11-02.
+
+## Final milestone status (2026-11-02)
+
+M00-M04 were delivered before this continuation. M05-M16 are implemented and
+pushed on `claude/loving-allen-8w5d2q`, one milestone at a time; M15 has the
+three planned page commits. Full suite: 655 passed, no skips. Coverage: 96%
+statements for concretecalc and app. Dependency check, original owner-baseline
+comparison and isolated installed-wheel loading of all 18 reference files pass.
+The Feret tolerance amendment is approved and recorded under M09. Reference
+verification and professor questions remain explicitly unresolved civil review,
+not unimplemented software milestones. See docs/walkthrough/M16-hardening.md.
 Read together with CLAUDE.md (ground rules), ASSUMPTIONS.md (A-numbers) and OPEN_QUESTIONS.md (Q-numbers).
 
 ## 0. Phase 0 findings (repo inspection, 2026-11-01)

@@ -5,6 +5,7 @@ import csv
 import numpy as np
 import pytest
 from concretecalc.calibration.fit import fit_abrams, fit_bolomey, fit_feret, fit_all, comparison_table
+pytest.importorskip('pandas',reason='Calibration dataset tests require the calibration extra')
 from concretecalc.calibration.dataset import load_rows, rows_to_fit_arrays
 from concretecalc.calibration.store import save_calibration, load_calibration, file_sha256
 

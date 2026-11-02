@@ -35,6 +35,12 @@ reproduced in PLAN.md, milestone M3, and are the only allowed source of table va
 
 ## Commands (PowerShell, from repo root)
 
+Session update 2026-11-02: owner authorized continuing the approved milestones
+one at a time and pushing each completed milestone without an approval pause.
+The original Desktop checkout was deliberately deleted by the owner; the owner
+authorized recreating it from GitHub in the current CodeBase directory.
+M01-M16 status and verification are recorded in PLAN.md and docs/walkthrough/.
+
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
