@@ -69,3 +69,16 @@ def test_upload_limits_and_unknown_format(client):
     assert client.post('/api/v1/calibration/validate',files={'file':('bad.txt',b'hello')}).status_code==422
     response=client.post('/api/v1/calibration/validate',files={'file':('large.csv',b'x'*(10*1024*1024+1))})
     assert response.status_code==413
+
+
+def test_visual_coverage_and_element_limits_come_from_reference_points(client):
+    inputs = client.get('/api/v1/metadata').json()['defaults_b']
+    for ae, lower, upper in [(False, .33, .82), (True, .32, .74)]:
+        inputs['air_entrained'] = ae
+        result = client.post('/api/v1/predict', json={'inputs': inputs}).json()
+        visuals = result['visuals']
+        assert visuals['table_wc_min'] == pytest.approx(lower, abs=1e-12)
+        assert visuals['table_wc_max'] == pytest.approx(upper, abs=1e-12)
+        assert visuals['curve_policy'] == 'extrapolate'
+        assert visuals['slump_element_range_mm'] == [25, 100]
+        assert sum(point['value'] for point in visuals['volumes']) == pytest.approx(result['report']['volumes']['total_m3'], abs=1e-12)

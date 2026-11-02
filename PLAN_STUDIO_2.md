@@ -74,4 +74,5 @@ professor decisions. Preserve concrete_ml and the original owner files.
 - U0 complete: M22 verified and pushed at e0285af.
 - U1 complete: scientific transparency, field influence and independent checks.
 - U2 complete: research pages, diagnostic grouping and snapshot print preparation.
-- U3–U7 remain planned, not implemented or release-audited.
+- U3 complete: coverage context and SVG/PNG/CSV figures.
+- U4–U7 remain planned, not implemented or release-audited.

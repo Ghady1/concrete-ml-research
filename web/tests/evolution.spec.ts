@@ -45,3 +45,24 @@ test('research pages provide working examples methods and visible attribution', 
   await page.getByText('Calculated input snapshot · canonical SI', { exact: true }).click();
   await expect(page.getByText('These are the submitted quantities', { exact: false })).toBeVisible();
 });
+
+test('figures export real SVG PNG and full precision data', async ({ page }) => {
+  await page.goto('/#evaluate');
+  await page.getByRole('button', { name: 'Run analysis', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Four perspectives on strength' })).toBeVisible();
+  const { readFile } = await import('node:fs/promises');
+  for (const [name, extension] of [['SVG image', '.svg'], ['PNG', '.png'], ['CSV data', '.csv']]) {
+    const pending = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Download Four perspectives on strength ' + name, exact: true }).click();
+    const file = await pending;
+    expect(file.suggestedFilename().endsWith(extension)).toBe(true);
+    const bytes = await readFile((await file.path())!);
+    expect(bytes.length).toBeGreaterThan(100);
+    if (extension === '.svg') expect(bytes.toString()).toContain('Model disagreement is not a confidence interval.');
+    if (extension === '.png') expect(bytes.subarray(1, 4).toString()).toBe('PNG');
+    if (extension === '.csv') expect(bytes.toString()).toContain('mean (MPa)');
+  }
+  await page.getByRole('tab', { name: 'Strength', exact: true }).click();
+  await expect(page.getByText(/Shading is outside table coverage/)).toBeVisible();
+});
+

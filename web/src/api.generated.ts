@@ -960,6 +960,17 @@ export interface components {
       ages: components["schemas"]["AgePoint"][];
       /** Required Mean Mpa */
       required_mean_mpa?: number | null;
+      /** Table Wc Min */
+      table_wc_min: number;
+      /** Table Wc Max */
+      table_wc_max: number;
+      /**
+       * Curve Policy
+       * @default extrapolate
+       */
+      curve_policy?: string;
+      /** Slump Element Range Mm */
+      slump_element_range_mm?: [number, number] | null;
     };
     /** VolumeCheck */
     VolumeCheck: {

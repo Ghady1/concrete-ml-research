@@ -2935,6 +2935,40 @@
               }
             ],
             "title": "Required Mean Mpa"
+          },
+          "table_wc_min": {
+            "type": "number",
+            "title": "Table Wc Min"
+          },
+          "table_wc_max": {
+            "type": "number",
+            "title": "Table Wc Max"
+          },
+          "curve_policy": {
+            "type": "string",
+            "title": "Curve Policy",
+            "default": "extrapolate"
+          },
+          "slump_element_range_mm": {
+            "anyOf": [
+              {
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "type": "array",
+                "maxItems": 2,
+                "minItems": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slump Element Range Mm"
           }
         },
         "type": "object",
@@ -2942,7 +2976,9 @@
           "strengths",
           "water",
           "volumes",
-          "ages"
+          "ages",
+          "table_wc_min",
+          "table_wc_max"
         ],
         "title": "Visuals"
       },
