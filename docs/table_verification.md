@@ -356,4 +356,3 @@ primary standard. Literature presets need primary citations before use.
 - [ ] Verify Abrams literature sources, age basis and specimen basis.
 - [ ] Verify Bolomey and Feret applicability to the lab's materials.
 - [ ] Review the A-14 Feret fitting basis against professor guidance.
-
