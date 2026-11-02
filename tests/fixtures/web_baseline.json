@@ -1,0 +1,155 @@
+{
+  "baseline_commit": "7c7a230",
+  "cases": [
+    {
+      "inputs": {
+        "specified_fc_mpa": 20.68427187,
+        "element": "reinforced_foundation_walls_footings",
+        "exposure": "moderate",
+        "air_entrained": false,
+        "cement_sg": 3.15,
+        "coarse": {
+          "sg_ssd": 2.69,
+          "drd_kg_m3": 1681.93865385,
+          "absorption_pct": 0.8,
+          "mc_pct": 2,
+          "shape": "angular"
+        },
+        "fine": {
+          "sg_ssd": 2.65,
+          "absorption_pct": 6,
+          "mc_pct": 8,
+          "fm": 2.6
+        },
+        "sigma_mpa": null,
+        "n_samples": null,
+        "slump_target_mm": null,
+        "hand_consolidated": false,
+        "nmas_mm": 37.5,
+        "form_min_dimension_mm": null,
+        "rebar_clear_spacing_mm": null,
+        "cover_mm": null,
+        "slab_thickness_mm": null,
+        "durability_class": "none",
+        "underwater": false,
+        "flatwork": false,
+        "cement_type": "I",
+        "curing": "moist",
+        "water_reducer_pct": null,
+        "moisture_convention": "course",
+        "bb0_adjustment_factor": 1.0,
+        "batch_volume_m3": 1.0
+      },
+      "cement_kg_m3": 314.80371858833,
+      "water_kg_m3": 181.0,
+      "fine_ssd_kg_m3": 659.7809217362005,
+      "wc": 0.574961442042857,
+      "strengths_mpa": {
+        "aci_table": 27.684271870000003,
+        "abrams": 26.89843505393183,
+        "bolomey": 25.40851052258598,
+        "feret": 27.138929267121583
+      }
+    },
+    {
+      "inputs": {
+        "specified_fc_mpa": 20.68427187,
+        "element": "reinforced_foundation_walls_footings",
+        "exposure": "moderate",
+        "air_entrained": true,
+        "cement_sg": 3.15,
+        "coarse": {
+          "sg_ssd": 2.69,
+          "drd_kg_m3": 1681.93865385,
+          "absorption_pct": 0.8,
+          "mc_pct": 2,
+          "shape": "angular"
+        },
+        "fine": {
+          "sg_ssd": 2.65,
+          "absorption_pct": 6,
+          "mc_pct": 8,
+          "fm": 2.6
+        },
+        "sigma_mpa": null,
+        "n_samples": null,
+        "slump_target_mm": null,
+        "hand_consolidated": false,
+        "nmas_mm": 37.5,
+        "form_min_dimension_mm": null,
+        "rebar_clear_spacing_mm": null,
+        "cover_mm": null,
+        "slab_thickness_mm": null,
+        "durability_class": "none",
+        "underwater": false,
+        "flatwork": false,
+        "cement_type": "I",
+        "curing": "moist",
+        "water_reducer_pct": null,
+        "moisture_convention": "course",
+        "bb0_adjustment_factor": 1.0,
+        "batch_volume_m3": 1.0
+      },
+      "cement_kg_m3": 340.2332344298386,
+      "water_kg_m3": 165.0,
+      "fine_ssd_kg_m3": 588.0378369806456,
+      "wc": 0.4849614420428571,
+      "strengths_mpa": {
+        "aci_table": 27.68427187,
+        "abrams": 27.426468120320685,
+        "bolomey": 26.01363249060641,
+        "feret": 26.532818091160223
+      }
+    },
+    {
+      "inputs": {
+        "specified_fc_mpa": 24.1,
+        "element": "building_columns",
+        "exposure": "severe",
+        "air_entrained": true,
+        "cement_sg": 3.15,
+        "coarse": {
+          "sg_ssd": 2.62,
+          "drd_kg_m3": 1681,
+          "absorption_pct": 0.4,
+          "mc_pct": 1.5,
+          "shape": "round_gravel"
+        },
+        "fine": {
+          "sg_ssd": 2.57,
+          "absorption_pct": 0.8,
+          "mc_pct": 4,
+          "fm": 2.6
+        },
+        "sigma_mpa": 2.4,
+        "n_samples": 31,
+        "slump_target_mm": null,
+        "hand_consolidated": false,
+        "nmas_mm": 25,
+        "form_min_dimension_mm": null,
+        "rebar_clear_spacing_mm": null,
+        "cover_mm": null,
+        "slab_thickness_mm": null,
+        "durability_class": "freeze_thaw_moist",
+        "underwater": false,
+        "flatwork": false,
+        "cement_type": "I",
+        "curing": "moist",
+        "water_reducer_pct": null,
+        "moisture_convention": "course",
+        "bb0_adjustment_factor": 1.0,
+        "batch_volume_m3": 1.0
+      },
+      "cement_kg_m3": 334.0,
+      "water_kg_m3": 148.0,
+      "fine_ssd_kg_m3": 620.6326992632983,
+      "wc": 0.4431137724550898,
+      "strengths_mpa": {
+        "aci_table": 31.227544910179642,
+        "abrams": 30.570904830388294,
+        "bolomey": 29.256754889275165,
+        "feret": 26.221576281947673
+      }
+    }
+  ]
+}
