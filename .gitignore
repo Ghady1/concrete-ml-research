@@ -33,3 +33,10 @@ htmlcov/
 coverage.xml
 build/
 dist/
+
+# Custom local frontend and browser verification artifacts
+web/node_modules/
+web/test-results/
+web/playwright-report/
+src/concretecalc_web/static/
+artifacts/

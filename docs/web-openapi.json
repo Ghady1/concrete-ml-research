@@ -1,0 +1,2728 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Concrete Research Studio",
+    "version": "0.2.0"
+  },
+  "paths": {
+    "/api/v1/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_api_v1_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/metadata": {
+      "get": {
+        "summary": "Metadata",
+        "operationId": "metadata_api_v1_metadata_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Metadata"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/default-air": {
+      "get": {
+        "summary": "Default Air",
+        "operationId": "default_air_api_v1_default_air_get",
+        "parameters": [
+          {
+            "name": "nmas_mm",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "title": "Nmas Mm"
+            }
+          },
+          {
+            "name": "exposure",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mild",
+                "moderate",
+                "severe"
+              ],
+              "type": "string",
+              "default": "moderate",
+              "title": "Exposure"
+            }
+          },
+          {
+            "name": "air_entrained",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Air Entrained"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/predict": {
+      "post": {
+        "summary": "Predict",
+        "operationId": "predict_api_v1_predict_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PredictRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PredictionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/design": {
+      "post": {
+        "summary": "Design",
+        "operationId": "design_api_v1_design_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DesignRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/calibrations": {
+      "get": {
+        "summary": "List Calibrations",
+        "operationId": "list_calibrations_api_v1_calibrations_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/calibrations/{material_set_id}": {
+      "get": {
+        "summary": "Get Calibration",
+        "operationId": "get_calibration_api_v1_calibrations__material_set_id__get",
+        "parameters": [
+          {
+            "name": "material_set_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Material Set Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/demo/calibration.csv": {
+      "get": {
+        "summary": "Demo Csv",
+        "operationId": "demo_csv_api_v1_demo_calibration_csv_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/calibration/validate": {
+      "post": {
+        "summary": "Validate Upload",
+        "operationId": "validate_upload_api_v1_calibration_validate_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_validate_upload_api_v1_calibration_validate_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/calibration/fit": {
+      "post": {
+        "summary": "Fit",
+        "operationId": "fit_api_v1_calibration_fit_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FitRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/calibration/save": {
+      "post": {
+        "summary": "Save",
+        "operationId": "save_api_v1_calibration_save_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Admixtures": {
+        "properties": {
+          "air_entrainer_ml_per_pct_per_100kg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Air Entrainer Ml Per Pct Per 100Kg"
+          },
+          "water_reducer_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Water Reducer Pct"
+          },
+          "superplasticizer_kg": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Superplasticizer Kg"
+          }
+        },
+        "type": "object",
+        "title": "Admixtures"
+      },
+      "AgeAdjusted": {
+        "properties": {
+          "f28_mpa": {
+            "type": "number",
+            "title": "F28 Mpa"
+          },
+          "age_days": {
+            "type": "number",
+            "title": "Age Days"
+          },
+          "strength_mpa": {
+            "type": "number",
+            "title": "Strength Mpa"
+          },
+          "factor": {
+            "type": "number",
+            "title": "Factor"
+          },
+          "a_days": {
+            "type": "number",
+            "title": "A Days"
+          },
+          "b": {
+            "type": "number",
+            "title": "B"
+          },
+          "normalised": {
+            "type": "boolean",
+            "title": "Normalised"
+          },
+          "coefficient_type": {
+            "type": "string",
+            "enum": [
+              "I",
+              "II",
+              "III",
+              "IV",
+              "V"
+            ],
+            "title": "Coefficient Type"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/Flag"
+            },
+            "type": "array",
+            "title": "Flags"
+          }
+        },
+        "type": "object",
+        "required": [
+          "f28_mpa",
+          "age_days",
+          "strength_mpa",
+          "factor",
+          "a_days",
+          "b",
+          "normalised",
+          "coefficient_type",
+          "flags"
+        ],
+        "title": "AgeAdjusted"
+      },
+      "AgePoint": {
+        "properties": {
+          "age_days": {
+            "type": "number",
+            "title": "Age Days"
+          },
+          "values": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Values"
+          }
+        },
+        "type": "object",
+        "required": [
+          "age_days",
+          "values"
+        ],
+        "title": "AgePoint"
+      },
+      "AggregateMoisture": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "entered_kg": {
+            "type": "number",
+            "title": "Entered Kg"
+          },
+          "basis": {
+            "type": "string",
+            "enum": [
+              "oven_dry",
+              "ssd",
+              "as_received"
+            ],
+            "title": "Basis"
+          },
+          "oven_dry_kg": {
+            "type": "number",
+            "title": "Oven Dry Kg"
+          },
+          "ssd_kg": {
+            "type": "number",
+            "title": "Ssd Kg"
+          },
+          "effective_mc_pct": {
+            "type": "number",
+            "title": "Effective Mc Pct"
+          },
+          "free_water_kg": {
+            "type": "number",
+            "title": "Free Water Kg"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/Flag"
+            },
+            "type": "array",
+            "title": "Flags"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "entered_kg",
+          "basis",
+          "oven_dry_kg",
+          "ssd_kg",
+          "effective_mc_pct",
+          "free_water_kg",
+          "flags"
+        ],
+        "title": "AggregateMoisture"
+      },
+      "BatchWeights": {
+        "properties": {
+          "batch_volume_m3": {
+            "type": "number",
+            "title": "Batch Volume M3"
+          },
+          "cement_kg": {
+            "type": "number",
+            "title": "Cement Kg"
+          },
+          "water_kg": {
+            "type": "number",
+            "title": "Water Kg"
+          },
+          "coarse_kg": {
+            "type": "number",
+            "title": "Coarse Kg"
+          },
+          "fine_kg": {
+            "type": "number",
+            "title": "Fine Kg"
+          },
+          "trial_batch_guidance": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Trial Batch Guidance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "batch_volume_m3",
+          "cement_kg",
+          "water_kg",
+          "coarse_kg",
+          "fine_kg",
+          "trial_batch_guidance"
+        ],
+        "title": "BatchWeights"
+      },
+      "Binder": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "weight_kg": {
+            "type": "number",
+            "title": "Weight Kg"
+          },
+          "sg": {
+            "type": "number",
+            "title": "Sg"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "cement",
+              "scm"
+            ],
+            "title": "Kind"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "weight_kg",
+          "sg",
+          "kind"
+        ],
+        "title": "Binder"
+      },
+      "Body_validate_upload_api_v1_calibration_validate_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_validate_upload_api_v1_calibration_validate_post"
+      },
+      "CementStep": {
+        "properties": {
+          "cement_from_wc_kg_m3": {
+            "type": "number",
+            "title": "Cement From Wc Kg M3"
+          },
+          "minimum_kg_m3": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Kg M3"
+          },
+          "minimum_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Reason"
+          },
+          "cement_kg_m3": {
+            "type": "number",
+            "title": "Cement Kg M3"
+          },
+          "wc_final": {
+            "type": "number",
+            "title": "Wc Final"
+          },
+          "governing": {
+            "type": "string",
+            "enum": [
+              "strength",
+              "durability",
+              "min_cement"
+            ],
+            "title": "Governing"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/Flag"
+            },
+            "type": "array",
+            "title": "Flags"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cement_from_wc_kg_m3",
+          "minimum_kg_m3",
+          "minimum_reason",
+          "cement_kg_m3",
+          "wc_final",
+          "governing",
+          "flags"
+        ],
+        "title": "CementStep"
+      },
+      "CharacteristicEstimate": {
+        "properties": {
+          "fcr_mean_mpa": {
+            "type": "number",
+            "title": "Fcr Mean Mpa"
+          },
+          "fc_est_mpa": {
+            "type": "number",
+            "title": "Fc Est Mpa"
+          },
+          "margin_mpa": {
+            "type": "number",
+            "title": "Margin Mpa"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "statistical",
+              "no_data"
+            ],
+            "title": "Method"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/Flag"
+            },
+            "type": "array",
+            "title": "Flags"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fcr_mean_mpa",
+          "fc_est_mpa",
+          "margin_mpa",
+          "method",
+          "label",
+          "flags"
+        ],
+        "title": "CharacteristicEstimate"
+      },
+      "CoarseAggregateProperties": {
+        "properties": {
+          "sg_ssd": {
+            "type": "number",
+            "title": "Sg Ssd"
+          },
+          "drd_kg_m3": {
+            "type": "number",
+            "title": "Drd Kg M3"
+          },
+          "absorption_pct": {
+            "type": "number",
+            "title": "Absorption Pct"
+          },
+          "mc_pct": {
+            "type": "number",
+            "title": "Mc Pct"
+          },
+          "shape": {
+            "type": "string",
+            "enum": [
+              "angular",
+              "subangular",
+              "gravel_with_crushed",
+              "round_gravel"
+            ],
+            "title": "Shape"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sg_ssd",
+          "drd_kg_m3",
+          "absorption_pct",
+          "mc_pct",
+          "shape"
+        ],
+        "title": "CoarseAggregateProperties"
+      },
+      "CoarseStep": {
+        "properties": {
+          "bb0_table": {
+            "type": "number",
+            "title": "Bb0 Table"
+          },
+          "bb0_used": {
+            "type": "number",
+            "title": "Bb0 Used"
+          },
+          "coarse_dry_kg_m3": {
+            "type": "number",
+            "title": "Coarse Dry Kg M3"
+          },
+          "coarse_ssd_kg_m3": {
+            "type": "number",
+            "title": "Coarse Ssd Kg M3"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/Flag"
+            },
+            "type": "array",
+            "title": "Flags"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bb0_table",
+          "bb0_used",
+          "coarse_dry_kg_m3",
+          "coarse_ssd_kg_m3",
+          "flags"
+        ],
+        "title": "CoarseStep"
+      },
+      "DesignRequest": {
+        "properties": {
+          "inputs": {
+            "$ref": "#/components/schemas/ModeAInputs"
+          },
+          "options": {
+            "$ref": "#/components/schemas/Options"
+          }
+        },
+        "type": "object",
+        "required": [
+          "inputs"
+        ],
+        "title": "DesignRequest"
+      },
+      "DesignResponse": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "title": "Schema Version",
+            "default": 1
+          },
+          "report": {
+            "$ref": "#/components/schemas/MixDesignReport"
+          },
+          "prediction": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StrengthReport"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "visuals": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Visuals"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "prediction_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prediction Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "report",
+          "prediction",
+          "visuals"
+        ],
+        "title": "DesignResponse"
+      },
+      "FieldWeights": {
+        "properties": {
+          "convention": {
+            "type": "string",
+            "enum": [
+              "course",
+              "strict"
+            ],
+            "title": "Convention"
+          },
+          "coarse_wet_kg": {
+            "type": "number",
+            "title": "Coarse Wet Kg"
+          },
+          "fine_wet_kg": {
+            "type": "number",
+            "title": "Fine Wet Kg"
+          },
+          "water_adjusted_kg": {
+            "type": "number",
+            "title": "Water Adjusted Kg"
+          },
+          "coarse_free_water_kg": {
+            "type": "number",
+            "title": "Coarse Free Water Kg"
+          },
+          "fine_free_water_kg": {
+            "type": "number",
+            "title": "Fine Free Water Kg"
+          }
+        },
+        "type": "object",
+        "required": [
+          "convention",
+          "coarse_wet_kg",
+          "fine_wet_kg",
+          "water_adjusted_kg",
+          "coarse_free_water_kg",
+          "fine_free_water_kg"
+        ],
+        "title": "FieldWeights"
+      },
+      "FineAggregateProperties": {
+        "properties": {
+          "sg_ssd": {
+            "type": "number",
+            "title": "Sg Ssd"
+          },
+          "absorption_pct": {
+            "type": "number",
+            "title": "Absorption Pct"
+          },
+          "mc_pct": {
+            "type": "number",
+            "title": "Mc Pct"
+          },
+          "fm": {
+            "type": "number",
+            "title": "Fm"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sg_ssd",
+          "absorption_pct",
+          "mc_pct",
+          "fm"
+        ],
+        "title": "FineAggregateProperties"
+      },
+      "FineStep": {
+        "properties": {
+          "volumes_m3": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Volumes M3"
+          },
+          "fine_volume_m3": {
+            "type": "number",
+            "title": "Fine Volume M3"
+          },
+          "fine_ssd_kg_m3": {
+            "type": "number",
+            "title": "Fine Ssd Kg M3"
+          },
+          "unit_weight_kg_m3": {
+            "type": "number",
+            "title": "Unit Weight Kg M3"
+          },
+          "fine_weight_method_kg_m3": {
+            "type": "number",
+            "title": "Fine Weight Method Kg M3"
+          },
+          "method_difference_kg_m3": {
+            "type": "number",
+            "title": "Method Difference Kg M3"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/Flag"
+            },
+            "type": "array",
+            "title": "Flags"
+          }
+        },
+        "type": "object",
+        "required": [
+          "volumes_m3",
+          "fine_volume_m3",
+          "fine_ssd_kg_m3",
+          "unit_weight_kg_m3",
+          "fine_weight_method_kg_m3",
+          "method_difference_kg_m3",
+          "flags"
+        ],
+        "title": "FineStep"
+      },
+      "FitRequest": {
+        "properties": {
+          "dataset_id": {
+            "type": "string",
+            "title": "Dataset Id"
+          },
+          "material_set_id": {
+            "type": "string",
+            "title": "Material Set Id"
+          },
+          "age_policy": {
+            "type": "string",
+            "enum": [
+              "only_28d",
+              "convert"
+            ],
+            "title": "Age Policy",
+            "default": "only_28d"
+          },
+          "accept_valid_subset": {
+            "type": "boolean",
+            "title": "Accept Valid Subset",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "dataset_id",
+          "material_set_id"
+        ],
+        "title": "FitRequest"
+      },
+      "Flag": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "info",
+              "warning",
+              "error"
+            ],
+            "title": "Severity"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "severity",
+          "message"
+        ],
+        "title": "Flag"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Metadata": {
+        "properties": {
+          "disclaimer": {
+            "type": "string",
+            "title": "Disclaimer"
+          },
+          "defaults_b": {
+            "$ref": "#/components/schemas/MixInputs"
+          },
+          "defaults_a": {
+            "$ref": "#/components/schemas/ModeAInputs"
+          },
+          "choices": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Choices"
+          },
+          "conversion_factors": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Conversion Factors"
+          },
+          "examples": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Examples"
+          }
+        },
+        "type": "object",
+        "required": [
+          "disclaimer",
+          "defaults_b",
+          "defaults_a",
+          "choices",
+          "conversion_factors",
+          "examples"
+        ],
+        "title": "Metadata"
+      },
+      "MixDesignReport": {
+        "properties": {
+          "inputs": {
+            "$ref": "#/components/schemas/ModeAInputs"
+          },
+          "slump": {
+            "$ref": "#/components/schemas/SlumpStep"
+          },
+          "nmas": {
+            "$ref": "#/components/schemas/NmasStep"
+          },
+          "water_air": {
+            "$ref": "#/components/schemas/WaterAirStep"
+          },
+          "wc": {
+            "$ref": "#/components/schemas/WcStep"
+          },
+          "cement": {
+            "$ref": "#/components/schemas/CementStep"
+          },
+          "coarse": {
+            "$ref": "#/components/schemas/CoarseStep"
+          },
+          "fine": {
+            "$ref": "#/components/schemas/FineStep"
+          },
+          "field": {
+            "$ref": "#/components/schemas/FieldWeights"
+          },
+          "field_other_convention": {
+            "$ref": "#/components/schemas/FieldWeights"
+          },
+          "proportions": {
+            "$ref": "#/components/schemas/Proportions"
+          },
+          "batch": {
+            "$ref": "#/components/schemas/BatchWeights"
+          },
+          "governing_constraint": {
+            "type": "string",
+            "title": "Governing Constraint"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/Flag"
+            },
+            "type": "array",
+            "title": "Flags"
+          },
+          "disclaimer": {
+            "type": "string",
+            "title": "Disclaimer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "inputs",
+          "slump",
+          "nmas",
+          "water_air",
+          "wc",
+          "cement",
+          "coarse",
+          "fine",
+          "field",
+          "field_other_convention",
+          "proportions",
+          "batch",
+          "governing_constraint",
+          "flags",
+          "disclaimer"
+        ],
+        "title": "MixDesignReport"
+      },
+      "MixInputs": {
+        "properties": {
+          "cement": {
+            "$ref": "#/components/schemas/Binder"
+          },
+          "water_kg": {
+            "type": "number",
+            "title": "Water Kg"
+          },
+          "coarse_kg": {
+            "type": "number",
+            "title": "Coarse Kg"
+          },
+          "coarse": {
+            "$ref": "#/components/schemas/CoarseAggregateProperties"
+          },
+          "fine_kg": {
+            "type": "number",
+            "title": "Fine Kg"
+          },
+          "fine": {
+            "$ref": "#/components/schemas/FineAggregateProperties"
+          },
+          "nmas_mm": {
+            "type": "number",
+            "title": "Nmas Mm"
+          },
+          "aggregate_weight_basis": {
+            "type": "string",
+            "enum": [
+              "oven_dry",
+              "ssd",
+              "as_received"
+            ],
+            "title": "Aggregate Weight Basis"
+          },
+          "air_entrained": {
+            "type": "boolean",
+            "title": "Air Entrained"
+          },
+          "exposure": {
+            "type": "string",
+            "enum": [
+              "mild",
+              "moderate",
+              "severe"
+            ],
+            "title": "Exposure"
+          },
+          "cement_type": {
+            "type": "string",
+            "enum": [
+              "I",
+              "II",
+              "III",
+              "IV",
+              "V"
+            ],
+            "title": "Cement Type",
+            "default": "I"
+          },
+          "cement_strength_class": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cement Strength Class"
+          },
+          "air_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Air Pct"
+          },
+          "curing": {
+            "type": "string",
+            "enum": [
+              "moist",
+              "steam"
+            ],
+            "title": "Curing",
+            "default": "moist"
+          },
+          "age_days": {
+            "type": "number",
+            "title": "Age Days",
+            "default": 28.0
+          },
+          "batch_volume_m3": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Batch Volume M3"
+          },
+          "specimen": {
+            "type": "string",
+            "enum": [
+              "cylinder_150x300",
+              "cube_150"
+            ],
+            "title": "Specimen",
+            "default": "cylinder_150x300"
+          },
+          "cube_to_cylinder_factor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cube To Cylinder Factor"
+          },
+          "sigma_mpa": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sigma Mpa"
+          },
+          "n_samples": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Samples"
+          },
+          "element": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "reinforced_foundation_walls_footings",
+                  "plain_footings_caissons_substructure_walls",
+                  "beams_reinforced_walls",
+                  "building_columns",
+                  "pavements_slabs",
+                  "mass_concrete"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Element"
+          },
+          "admixtures": {
+            "$ref": "#/components/schemas/Admixtures",
+            "default": {}
+          },
+          "scm": {
+            "items": {
+              "$ref": "#/components/schemas/Binder"
+            },
+            "type": "array",
+            "title": "Scm",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "cement",
+          "water_kg",
+          "coarse_kg",
+          "coarse",
+          "fine_kg",
+          "fine",
+          "nmas_mm",
+          "aggregate_weight_basis",
+          "air_entrained",
+          "exposure"
+        ],
+        "title": "MixInputs"
+      },
+      "ModeAInputs": {
+        "properties": {
+          "specified_fc_mpa": {
+            "type": "number",
+            "title": "Specified Fc Mpa"
+          },
+          "element": {
+            "type": "string",
+            "enum": [
+              "reinforced_foundation_walls_footings",
+              "plain_footings_caissons_substructure_walls",
+              "beams_reinforced_walls",
+              "building_columns",
+              "pavements_slabs",
+              "mass_concrete"
+            ],
+            "title": "Element"
+          },
+          "exposure": {
+            "type": "string",
+            "enum": [
+              "mild",
+              "moderate",
+              "severe"
+            ],
+            "title": "Exposure"
+          },
+          "air_entrained": {
+            "type": "boolean",
+            "title": "Air Entrained"
+          },
+          "cement_sg": {
+            "type": "number",
+            "title": "Cement Sg"
+          },
+          "coarse": {
+            "$ref": "#/components/schemas/CoarseAggregateProperties"
+          },
+          "fine": {
+            "$ref": "#/components/schemas/FineAggregateProperties"
+          },
+          "sigma_mpa": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sigma Mpa"
+          },
+          "n_samples": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "N Samples"
+          },
+          "slump_target_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slump Target Mm"
+          },
+          "hand_consolidated": {
+            "type": "boolean",
+            "title": "Hand Consolidated",
+            "default": false
+          },
+          "nmas_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nmas Mm"
+          },
+          "form_min_dimension_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Form Min Dimension Mm"
+          },
+          "rebar_clear_spacing_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rebar Clear Spacing Mm"
+          },
+          "cover_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cover Mm"
+          },
+          "slab_thickness_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slab Thickness Mm"
+          },
+          "durability_class": {
+            "type": "string",
+            "enum": [
+              "none",
+              "low_permeability",
+              "freeze_thaw_moist",
+              "corrosion_protection"
+            ],
+            "title": "Durability Class",
+            "default": "none"
+          },
+          "underwater": {
+            "type": "boolean",
+            "title": "Underwater",
+            "default": false
+          },
+          "flatwork": {
+            "type": "boolean",
+            "title": "Flatwork",
+            "default": false
+          },
+          "cement_type": {
+            "type": "string",
+            "enum": [
+              "I",
+              "II",
+              "III",
+              "IV",
+              "V"
+            ],
+            "title": "Cement Type",
+            "default": "I"
+          },
+          "curing": {
+            "type": "string",
+            "enum": [
+              "moist",
+              "steam"
+            ],
+            "title": "Curing",
+            "default": "moist"
+          },
+          "water_reducer_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Water Reducer Pct"
+          },
+          "moisture_convention": {
+            "type": "string",
+            "enum": [
+              "course",
+              "strict"
+            ],
+            "title": "Moisture Convention",
+            "default": "course"
+          },
+          "bb0_adjustment_factor": {
+            "type": "number",
+            "title": "Bb0 Adjustment Factor",
+            "default": 1.0
+          },
+          "batch_volume_m3": {
+            "type": "number",
+            "title": "Batch Volume M3",
+            "default": 1.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "specified_fc_mpa",
+          "element",
+          "exposure",
+          "air_entrained",
+          "cement_sg",
+          "coarse",
+          "fine"
+        ],
+        "title": "ModeAInputs"
+      },
+      "NmasStep": {
+        "properties": {
+          "limits_mm": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Limits Mm"
+          },
+          "governing_limit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Governing Limit"
+          },
+          "limit_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit Mm"
+          },
+          "max_size_mm": {
+            "type": "number",
+            "title": "Max Size Mm"
+          },
+          "nmas_mm": {
+            "type": "number",
+            "title": "Nmas Mm"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/Flag"
+            },
+            "type": "array",
+            "title": "Flags"
+          }
+        },
+        "type": "object",
+        "required": [
+          "limits_mm",
+          "governing_limit",
+          "limit_mm",
+          "max_size_mm",
+          "nmas_mm",
+          "flags"
+        ],
+        "title": "NmasStep"
+      },
+      "Options": {
+        "properties": {
+          "policy": {
+            "type": "string",
+            "enum": [
+              "clamp",
+              "extrapolate",
+              "raise"
+            ],
+            "title": "Policy",
+            "default": "extrapolate"
+          },
+          "normalise_age_to_28d": {
+            "type": "boolean",
+            "title": "Normalise Age To 28D",
+            "default": false
+          },
+          "calibration_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calibration Id"
+          }
+        },
+        "type": "object",
+        "title": "Options"
+      },
+      "PackingIndicators": {
+        "properties": {
+          "coarse_void_content": {
+            "type": "number",
+            "title": "Coarse Void Content"
+          },
+          "coarse_bulk_ratio_actual": {
+            "type": "number",
+            "title": "Coarse Bulk Ratio Actual"
+          },
+          "coarse_bulk_ratio_table": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coarse Bulk Ratio Table"
+          },
+          "coarse_bulk_ratio_deviation_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coarse Bulk Ratio Deviation Pct"
+          },
+          "paste_volume_m3": {
+            "type": "number",
+            "title": "Paste Volume M3"
+          },
+          "fine_fraction_by_mass": {
+            "type": "number",
+            "title": "Fine Fraction By Mass"
+          },
+          "fine_fraction_by_volume": {
+            "type": "number",
+            "title": "Fine Fraction By Volume"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/Flag"
+            },
+            "type": "array",
+            "title": "Flags"
+          }
+        },
+        "type": "object",
+        "required": [
+          "coarse_void_content",
+          "coarse_bulk_ratio_actual",
+          "coarse_bulk_ratio_table",
+          "coarse_bulk_ratio_deviation_pct",
+          "paste_volume_m3",
+          "fine_fraction_by_mass",
+          "fine_fraction_by_volume",
+          "flags"
+        ],
+        "title": "PackingIndicators"
+      },
+      "Point": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "value"
+        ],
+        "title": "Point"
+      },
+      "PredictRequest": {
+        "properties": {
+          "inputs": {
+            "$ref": "#/components/schemas/MixInputs"
+          },
+          "options": {
+            "$ref": "#/components/schemas/Options"
+          }
+        },
+        "type": "object",
+        "required": [
+          "inputs"
+        ],
+        "title": "PredictRequest"
+      },
+      "PredictionResponse": {
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "title": "Schema Version",
+            "default": 1
+          },
+          "report": {
+            "$ref": "#/components/schemas/StrengthReport"
+          },
+          "visuals": {
+            "$ref": "#/components/schemas/Visuals"
+          }
+        },
+        "type": "object",
+        "required": [
+          "report",
+          "visuals"
+        ],
+        "title": "PredictionResponse"
+      },
+      "Proportions": {
+        "properties": {
+          "cement": {
+            "type": "number",
+            "title": "Cement"
+          },
+          "fine": {
+            "type": "number",
+            "title": "Fine"
+          },
+          "coarse": {
+            "type": "number",
+            "title": "Coarse"
+          },
+          "water": {
+            "type": "number",
+            "title": "Water"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cement",
+          "fine",
+          "coarse",
+          "water"
+        ],
+        "title": "Proportions"
+      },
+      "RequiredStrength": {
+        "properties": {
+          "fc_mpa": {
+            "type": "number",
+            "title": "Fc Mpa"
+          },
+          "fcr_mpa": {
+            "type": "number",
+            "title": "Fcr Mpa"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "statistical",
+              "no_data"
+            ],
+            "title": "Method"
+          },
+          "f_factor": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "F Factor"
+          },
+          "sigma_mpa": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sigma Mpa"
+          },
+          "candidate_134_mpa": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate 134 Mpa"
+          },
+          "candidate_233_mpa": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate 233 Mpa"
+          },
+          "governing": {
+            "type": "string",
+            "title": "Governing"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/Flag"
+            },
+            "type": "array",
+            "title": "Flags"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fc_mpa",
+          "fcr_mpa",
+          "method",
+          "f_factor",
+          "sigma_mpa",
+          "candidate_134_mpa",
+          "candidate_233_mpa",
+          "governing",
+          "flags"
+        ],
+        "title": "RequiredStrength"
+      },
+      "SaveRequest": {
+        "properties": {
+          "fit_id": {
+            "type": "string",
+            "title": "Fit Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fit_id"
+        ],
+        "title": "SaveRequest"
+      },
+      "SlumpEstimate": {
+        "properties": {
+          "slump_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slump Mm"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "band_mm": {
+            "type": "number",
+            "title": "Band Mm"
+          },
+          "lower_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lower Mm"
+          },
+          "upper_mm": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Upper Mm"
+          },
+          "trial_tolerance_mm": {
+            "type": "number",
+            "title": "Trial Tolerance Mm"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/Flag"
+            },
+            "type": "array",
+            "title": "Flags"
+          }
+        },
+        "type": "object",
+        "required": [
+          "slump_mm",
+          "status",
+          "band_mm",
+          "lower_mm",
+          "upper_mm",
+          "trial_tolerance_mm",
+          "flags"
+        ],
+        "title": "SlumpEstimate"
+      },
+      "SlumpStep": {
+        "properties": {
+          "min_mm": {
+            "type": "number",
+            "title": "Min Mm"
+          },
+          "max_mm": {
+            "type": "number",
+            "title": "Max Mm"
+          },
+          "target_mm": {
+            "type": "number",
+            "title": "Target Mm"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/Flag"
+            },
+            "type": "array",
+            "title": "Flags"
+          }
+        },
+        "type": "object",
+        "required": [
+          "min_mm",
+          "max_mm",
+          "target_mm",
+          "flags"
+        ],
+        "title": "SlumpStep"
+      },
+      "Status": {
+        "type": "string",
+        "enum": [
+          "ok",
+          "clamped",
+          "extrapolated",
+          "unavailable"
+        ],
+        "title": "Status",
+        "description": "How trustworthy a looked-up value is, from best to worst.\n\nInheriting from str makes Status.OK == \"ok\" and lets reports be written\nto JSON without special handling."
+      },
+      "StrengthPlotData": {
+        "properties": {
+          "aci_non_ae_points": {
+            "items": {
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array",
+              "maxItems": 2,
+              "minItems": 2
+            },
+            "type": "array",
+            "title": "Aci Non Ae Points"
+          },
+          "aci_ae_points": {
+            "items": {
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array",
+              "maxItems": 2,
+              "minItems": 2
+            },
+            "type": "array",
+            "title": "Aci Ae Points"
+          },
+          "model_curves": {
+            "additionalProperties": {
+              "items": {
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                ],
+                "type": "array",
+                "maxItems": 2,
+                "minItems": 2
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Model Curves"
+          },
+          "mix_point_wc": {
+            "type": "number",
+            "title": "Mix Point Wc"
+          },
+          "mix_point_strengths_mpa": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Mix Point Strengths Mpa"
+          }
+        },
+        "type": "object",
+        "required": [
+          "aci_non_ae_points",
+          "aci_ae_points",
+          "model_curves",
+          "mix_point_wc",
+          "mix_point_strengths_mpa"
+        ],
+        "title": "StrengthPlotData"
+      },
+      "StrengthPrediction": {
+        "properties": {
+          "model_name": {
+            "type": "string",
+            "title": "Model Name"
+          },
+          "mean_28d_mpa": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean 28D Mpa"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/Flag"
+            },
+            "type": "array",
+            "title": "Flags"
+          },
+          "constants_used": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Constants Used"
+          },
+          "constants_source": {
+            "type": "string",
+            "title": "Constants Source"
+          },
+          "calibrated": {
+            "type": "boolean",
+            "title": "Calibrated"
+          },
+          "disclaimer": {
+            "type": "string",
+            "title": "Disclaimer",
+            "default": "Estimated mean strength (research prediction; NOT a certified structural design value)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "model_name",
+          "mean_28d_mpa",
+          "status",
+          "warnings",
+          "flags",
+          "constants_used",
+          "constants_source",
+          "calibrated"
+        ],
+        "title": "StrengthPrediction"
+      },
+      "StrengthReport": {
+        "properties": {
+          "inputs": {
+            "$ref": "#/components/schemas/MixInputs"
+          },
+          "per_m3_scale": {
+            "type": "number",
+            "title": "Per M3 Scale"
+          },
+          "cement_kg_m3": {
+            "type": "number",
+            "title": "Cement Kg M3"
+          },
+          "water_added_kg_m3": {
+            "type": "number",
+            "title": "Water Added Kg M3"
+          },
+          "coarse_entered_kg_m3": {
+            "type": "number",
+            "title": "Coarse Entered Kg M3"
+          },
+          "fine_entered_kg_m3": {
+            "type": "number",
+            "title": "Fine Entered Kg M3"
+          },
+          "coarse": {
+            "$ref": "#/components/schemas/AggregateMoisture"
+          },
+          "fine": {
+            "$ref": "#/components/schemas/AggregateMoisture"
+          },
+          "water": {
+            "$ref": "#/components/schemas/WaterBreakdown"
+          },
+          "wc": {
+            "type": "number",
+            "title": "Wc"
+          },
+          "wcm": {
+            "type": "number",
+            "title": "Wcm"
+          },
+          "air_pct": {
+            "type": "number",
+            "title": "Air Pct"
+          },
+          "air_source": {
+            "type": "string",
+            "enum": [
+              "aci_table",
+              "user"
+            ],
+            "title": "Air Source"
+          },
+          "volumes": {
+            "$ref": "#/components/schemas/VolumeCheck"
+          },
+          "unit_weight": {
+            "$ref": "#/components/schemas/UnitWeightCheck"
+          },
+          "indicators": {
+            "$ref": "#/components/schemas/PackingIndicators"
+          },
+          "predictions": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/StrengthPrediction"
+            },
+            "type": "object",
+            "title": "Predictions"
+          },
+          "age_adjusted": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/AgeAdjusted"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Age Adjusted"
+          },
+          "characteristic": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/CharacteristicEstimate"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Characteristic"
+          },
+          "slump": {
+            "$ref": "#/components/schemas/SlumpEstimate"
+          },
+          "air_entrainer_dosage_ml_m3": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Air Entrainer Dosage Ml M3"
+          },
+          "cube_equivalent_mpa": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Cube Equivalent Mpa"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/Flag"
+            },
+            "type": "array",
+            "title": "Flags"
+          },
+          "plot": {
+            "$ref": "#/components/schemas/StrengthPlotData"
+          },
+          "disclaimer": {
+            "type": "string",
+            "title": "Disclaimer"
+          }
+        },
+        "type": "object",
+        "required": [
+          "inputs",
+          "per_m3_scale",
+          "cement_kg_m3",
+          "water_added_kg_m3",
+          "coarse_entered_kg_m3",
+          "fine_entered_kg_m3",
+          "coarse",
+          "fine",
+          "water",
+          "wc",
+          "wcm",
+          "air_pct",
+          "air_source",
+          "volumes",
+          "unit_weight",
+          "indicators",
+          "predictions",
+          "age_adjusted",
+          "characteristic",
+          "slump",
+          "air_entrainer_dosage_ml_m3",
+          "cube_equivalent_mpa",
+          "flags",
+          "plot",
+          "disclaimer"
+        ],
+        "title": "StrengthReport"
+      },
+      "UnitWeightCheck": {
+        "properties": {
+          "computed_kg_m3": {
+            "type": "number",
+            "title": "Computed Kg M3"
+          },
+          "aci_kg_m3": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aci Kg M3"
+          },
+          "deviation_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deviation Pct"
+          },
+          "status": {
+            "$ref": "#/components/schemas/Status"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/Flag"
+            },
+            "type": "array",
+            "title": "Flags"
+          }
+        },
+        "type": "object",
+        "required": [
+          "computed_kg_m3",
+          "aci_kg_m3",
+          "deviation_pct",
+          "status",
+          "flags"
+        ],
+        "title": "UnitWeightCheck"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "Visuals": {
+        "properties": {
+          "strengths": {
+            "items": {
+              "$ref": "#/components/schemas/Point"
+            },
+            "type": "array",
+            "title": "Strengths"
+          },
+          "water": {
+            "items": {
+              "$ref": "#/components/schemas/Point"
+            },
+            "type": "array",
+            "title": "Water"
+          },
+          "volumes": {
+            "items": {
+              "$ref": "#/components/schemas/Point"
+            },
+            "type": "array",
+            "title": "Volumes"
+          },
+          "ages": {
+            "items": {
+              "$ref": "#/components/schemas/AgePoint"
+            },
+            "type": "array",
+            "title": "Ages"
+          },
+          "required_mean_mpa": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Required Mean Mpa"
+          }
+        },
+        "type": "object",
+        "required": [
+          "strengths",
+          "water",
+          "volumes",
+          "ages"
+        ],
+        "title": "Visuals"
+      },
+      "VolumeCheck": {
+        "properties": {
+          "cement_m3": {
+            "type": "number",
+            "title": "Cement M3"
+          },
+          "scm_m3": {
+            "type": "number",
+            "title": "Scm M3"
+          },
+          "water_m3": {
+            "type": "number",
+            "title": "Water M3"
+          },
+          "coarse_m3": {
+            "type": "number",
+            "title": "Coarse M3"
+          },
+          "fine_m3": {
+            "type": "number",
+            "title": "Fine M3"
+          },
+          "air_m3": {
+            "type": "number",
+            "title": "Air M3"
+          },
+          "total_m3": {
+            "type": "number",
+            "title": "Total M3"
+          },
+          "closure_error_m3": {
+            "type": "number",
+            "title": "Closure Error M3"
+          },
+          "implied_air_pct": {
+            "type": "number",
+            "title": "Implied Air Pct"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/Flag"
+            },
+            "type": "array",
+            "title": "Flags"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cement_m3",
+          "scm_m3",
+          "water_m3",
+          "coarse_m3",
+          "fine_m3",
+          "air_m3",
+          "total_m3",
+          "closure_error_m3",
+          "implied_air_pct",
+          "flags"
+        ],
+        "title": "VolumeCheck"
+      },
+      "WaterAirStep": {
+        "properties": {
+          "water_table_kg_m3": {
+            "type": "number",
+            "title": "Water Table Kg M3"
+          },
+          "water_reduction_kg_m3": {
+            "type": "number",
+            "title": "Water Reduction Kg M3"
+          },
+          "water_kg_m3": {
+            "type": "number",
+            "title": "Water Kg M3"
+          },
+          "air_pct": {
+            "type": "number",
+            "title": "Air Pct"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/Flag"
+            },
+            "type": "array",
+            "title": "Flags"
+          }
+        },
+        "type": "object",
+        "required": [
+          "water_table_kg_m3",
+          "water_reduction_kg_m3",
+          "water_kg_m3",
+          "air_pct",
+          "flags"
+        ],
+        "title": "WaterAirStep"
+      },
+      "WaterBreakdown": {
+        "properties": {
+          "added_water_kg": {
+            "type": "number",
+            "title": "Added Water Kg"
+          },
+          "free_water_ca_kg": {
+            "type": "number",
+            "title": "Free Water Ca Kg"
+          },
+          "free_water_fa_kg": {
+            "type": "number",
+            "title": "Free Water Fa Kg"
+          },
+          "effective_water_kg": {
+            "type": "number",
+            "title": "Effective Water Kg"
+          }
+        },
+        "type": "object",
+        "required": [
+          "added_water_kg",
+          "free_water_ca_kg",
+          "free_water_fa_kg",
+          "effective_water_kg"
+        ],
+        "title": "WaterBreakdown"
+      },
+      "WcStep": {
+        "properties": {
+          "fcr": {
+            "$ref": "#/components/schemas/RequiredStrength"
+          },
+          "wc_strength": {
+            "type": "number",
+            "title": "Wc Strength"
+          },
+          "wc_durability": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wc Durability"
+          },
+          "wc": {
+            "type": "number",
+            "title": "Wc"
+          },
+          "governing": {
+            "type": "string",
+            "enum": [
+              "strength",
+              "durability"
+            ],
+            "title": "Governing"
+          },
+          "wc_specified_table": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Wc Specified Table"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/Flag"
+            },
+            "type": "array",
+            "title": "Flags"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fcr",
+          "wc_strength",
+          "wc_durability",
+          "wc",
+          "governing",
+          "wc_specified_table",
+          "flags"
+        ],
+        "title": "WcStep"
+      }
+    }
+  }
+}

@@ -11,9 +11,10 @@ requires-python = ">=3.10"
 dependencies = ["numpy"]
 
 [project.optional-dependencies]
-dev = ["pytest", "hypothesis", "pytest-cov"]
+dev = ["pytest", "hypothesis", "pytest-cov", "httpx"]
 calibration = ["pandas", "openpyxl"]
 app = ["streamlit", "matplotlib"]
+web = ["fastapi>=0.115,<1", "pydantic>=2.12,<2.13", "uvicorn>=0.30,<1", "python-multipart>=0.0.18,<1"]
 
 [tool.setuptools.packages.find]
 # Finds both src/concretecalc and the owner's existing src/concrete_ml.
@@ -21,6 +22,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 concretecalc = ["data/*.json"]
+concretecalc_web = ["static/**/*", "static/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
