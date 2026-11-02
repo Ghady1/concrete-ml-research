@@ -1,0 +1,77 @@
+{
+  "reviewed_on": "2026-11-02",
+  "runtime_network_required": false,
+  "assets": [
+    {
+      "file": "source-sans-3.woff2",
+      "kind": "font",
+      "author": "Adobe",
+      "source_url": "https://github.com/adobe-fonts/source-sans/tree/release/WOFF2/VF",
+      "download_url": "https://raw.githubusercontent.com/adobe-fonts/source-sans/release/WOFF2/VF/SourceSans3VF-Upright.otf.woff2",
+      "license": "SIL Open Font License 1.1",
+      "license_url": "https://openfontlicense.org/open-font-license-official-text/",
+      "local_license": "SOURCE-SANS-LICENSE.md",
+      "modifications": "Unmodified official variable upright WOFF2.",
+      "bytes": 164736,
+      "sha256": "f9e4eac0e8f8ffdae91cf6eff3962b96e81417cba5c728bc1c89efe9510e7653"
+    },
+    {
+      "file": "source-serif-4.woff2",
+      "kind": "font",
+      "author": "Adobe",
+      "source_url": "https://github.com/adobe-fonts/source-serif/tree/release/WOFF2/VAR",
+      "download_url": "https://raw.githubusercontent.com/adobe-fonts/source-serif/release/WOFF2/VAR/SourceSerif4Variable-Roman.otf.woff2",
+      "license": "SIL Open Font License 1.1",
+      "license_url": "https://openfontlicense.org/open-font-license-official-text/",
+      "local_license": "SOURCE-SERIF-LICENSE.md",
+      "modifications": "Unmodified official variable Roman WOFF2.",
+      "bytes": 426716,
+      "sha256": "f146ee102dddcc5bc7a2cf4af5bcf129832195941b92bd0a512626f390688c1e"
+    },
+    {
+      "file": "concrete-architecture.webp",
+      "kind": "photograph",
+      "author": "Matt Reames",
+      "source_url": "https://unsplash.com/photos/white-concrete-building-during-daytime-U6WuKgCYbKE",
+      "download_url": "https://images.unsplash.com/photo-1543892607-04657ef3a279?fit=max&fm=webp&q=80&w=1600",
+      "license": "Unsplash License",
+      "license_url": "https://unsplash.com/license",
+      "modifications": "Proportional CDN resizing and WebP encoding; no content changes.",
+      "alt": "Sunlight falls on pale concrete panels and dark windows of a modern building.",
+      "bytes": 160364,
+      "sha256": "b4002eaa87ee47e04f1375dae1fdf0370cce4e48cbc7729d1355b653ac458aeb",
+      "width": 1600,
+      "height": 1067
+    },
+    {
+      "file": "concrete-texture.webp",
+      "kind": "photograph",
+      "author": "Meg (@megindoors)",
+      "source_url": "https://unsplash.com/photos/close-up-of-a-textured-concrete-surface-y5P_Gh2OZ8E",
+      "download_url": "https://images.unsplash.com/photo-1762286998655-c4334ce51b52?fit=max&fm=webp&q=80&w=960",
+      "license": "Unsplash License",
+      "license_url": "https://unsplash.com/license",
+      "modifications": "Resized proportionally to 800x533 and re-encoded WebP quality 65; no content changes.",
+      "alt": "Close view of a pale, rough concrete surface in sunlight.",
+      "bytes": 120060,
+      "sha256": "3ea388208e0c64ebed5e4b707c9b3f3220de20020f66e5ba7ae6bb75eae76262",
+      "width": 800,
+      "height": 533
+    },
+    {
+      "file": "coarse-aggregate.jpg",
+      "kind": "photograph",
+      "author": "Bill Bradley (Billbeee at English Wikipedia)",
+      "source_url": "https://commons.wikimedia.org/wiki/File:20mm-aggregate.jpg",
+      "download_url": "https://upload.wikimedia.org/wikipedia/commons/0/09/20mm-aggregate.jpg",
+      "license": "CC BY 3.0",
+      "license_url": "https://creativecommons.org/licenses/by/3.0/",
+      "modifications": "Unmodified original JPEG.",
+      "alt": "A hand holds coarse angular aggregate above a pile of similar stones.",
+      "bytes": 40857,
+      "sha256": "7ac1b5dd8fad220d686b61ae748efe3d32c5e884f799c2733581bbbe7b85560d",
+      "width": 900,
+      "height": 675
+    }
+  ]
+}
