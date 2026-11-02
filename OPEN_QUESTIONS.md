@@ -44,6 +44,24 @@ Added during planning:
 
 ## Part B - decisions for the owner
 
+### Pending 2026-11-02: M09 Feret acceptance conflict
+
+The specified combined AE/non-AE least-squares fit, using C=W/(w/c),
+SG_cement=3.15, water=205/184 kg/m3 and air=2%/5%, gives
+K=230.00330523607096. At the AE 41 MPa point (w/c=0.32),
+C=575 kg/m3, Vc=575/3150 m3, Vw=0.184 m3 and Va=0.05 m3.
+K*(Vc/(Vc+Vw+Va))^2=44.17086411386907 MPa, error=3.1708641138690723 MPa.
+This violates PLAN M09's pointwise abs 2.5 MPa Feret acceptance despite using
+exactly the prescribed fit. Pending owner decision: retain the fit with a
+documented 3.2 MPa pointwise tolerance, or revisit the fitting basis. No fit,
+test tolerance or source value has been changed to conceal the conflict.
+
+### Pending 2026-11-02: M14 CSV specification
+
+PLAN M14 references the original task's section 10 for calibration CSV columns;
+that section is absent from the repository. The owner has been asked for the
+schema or the original specification before the dataset API is implemented.
+
 **Resolved 2026-11-01: owner approved all of D-1 to D-6 as recommended** (D-1 add the two JSON files; D-2 option (b): `slump_lookup="band"` for Mode A; D-3 `presets` kind; D-4 store the 7-day preset only; D-5 add `pytest-cov` to the dev extra in M16; D-6 `tests/test_slump.py` and early `calibration/fit.py`).
 
 - **D-1** Numeric rules not covered by the allowed JSON list include the f'cr constants, unknown-sigma margins, slide rules, validity ranges and flag thresholds. Add `required_strength_rules.json` + `flag_thresholds.json`? Or keep them as named module constants with source docstrings?
