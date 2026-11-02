@@ -49,14 +49,14 @@ Every milestone is committed and pushed separately to the existing approved bran
 
 ## Status
 
-- M17: baseline/design specification â€” in progress.
-- M18: typed Python web boundary and chart data â€” pending.
-- M19: branded shell and scroll-safe controls â€” pending.
-- M20: complete evaluate workflow â€” pending.
-- M21: design and three-snapshot comparison â€” pending.
-- M22: calibration and diagnostics â€” pending.
-- M23: examples, print/export and offline demonstration package â€” pending.
-- M24: numerical/API/browser/accessibility/visual/offline release audit â€” pending.
+- M17: complete; implemented, verified and pushed separately (see Git history).
+- M18: complete; implemented, verified and pushed separately (see Git history).
+- M19: complete; implemented, verified and pushed separately (see Git history).
+- M20: complete; implemented, verified and pushed separately (see Git history).
+- M21: complete; implemented, verified and pushed separately (see Git history).
+- M22: complete; calibration lifecycle, typed diagnostics and Chrome/Edge verification.
+- M23: examples, print/export and offline demonstration package — pending.
+- M24: numerical/API/browser/accessibility/visual/offline release audit — pending.
 
 Acceptance: preserve all 655 tests; API/direct-engine numerical parity; browser
 wheel/focus/unit/stale/export tests; all three workflows; accessibility and

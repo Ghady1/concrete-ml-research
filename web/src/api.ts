@@ -8,6 +8,8 @@ export type Report = components['schemas']['StrengthReport'];
 export type Visuals = components['schemas']['Visuals'];
 export type Options = components['schemas']['Options'];
 export type Flag = components['schemas']['Flag'];
+export type Uploaded = components['schemas']['UploadResponse'];
+export type Fit = components['schemas']['FitResponse'];
 export class ApiError extends Error {
   constructor(message: string, public fields: { path: string; message: string }[] = []) { super(message); }
 }

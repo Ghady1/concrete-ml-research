@@ -14,13 +14,13 @@ from pydantic import BaseModel,Field
 from concretecalc import schemas as s,units
 from concretecalc.mode_b import StrengthReport,run_mode_b
 from concretecalc.mix_design import MixDesignReport,design_mix,to_mode_b_inputs
-from concretecalc.calibration.dataset import load_rows,rows_to_fit_arrays,_row_inputs
+from concretecalc.calibration.dataset import CalibrationRow,load_rows,rows_to_fit_arrays,_row_inputs
 from concretecalc.calibration.fit import FitResult,fit_all
 from concretecalc.calibration.store import save_calibration,load_calibration
 from concretecalc.strength import ModelConstants,MixState
 from concretecalc.strength.registry import MODEL_REGISTRY
 from concretecalc.moisture import aggregate_moisture,effective_water
-from concretecalc.volumes import absolute_volume_m3
+from concretecalc.volumes import absolute_volume_m3,volume_check
 from concretecalc.tables.lookups import air_content_pct
 from .examples import defaults_a,defaults_b,course_examples,synthetic_csv
 from .presentation import Visuals,chart_data
@@ -74,6 +74,40 @@ class FitRequest(BaseModel):
 
 class SaveRequest(BaseModel):
     fit_id: str
+
+
+class RowIssue(BaseModel):
+    row: int
+    column: str
+    message: str
+
+
+class UploadResponse(BaseModel):
+    dataset_id: str
+    valid_count: int
+    errors: list[RowIssue]
+    rows: list[CalibrationRow]
+    material_sets: list[str]
+    source_name: str
+    data_hash: str
+
+
+class DiagnosticPoint(BaseModel):
+    mix_id: str
+    measured_mpa: float
+    predicted_mpa: float
+    residual_mpa: float
+
+
+class FitResponse(BaseModel):
+    fit_id: str
+    material_set_id: str
+    results: dict[str,FitResult]
+    diagnostics: dict[str,list[DiagnosticPoint]]
+    eligible_rows: int
+    excluded_rows: int
+    converted_rows: int
+    data_hash: str
 
 
 def create_app(calibrations_dir: Path | None=None) -> FastAPI:
@@ -155,7 +189,7 @@ def create_app(calibrations_dir: Path | None=None) -> FastAPI:
     def demo_csv():
         return Response(synthetic_csv(),media_type='text/csv',headers={'Content-Disposition':'attachment; filename="synthetic-demo.csv"'})
 
-    @app.post('/api/v1/calibration/validate')
+    @app.post('/api/v1/calibration/validate',response_model=UploadResponse)
     async def validate_upload(file: UploadFile):
         payload=await file.read(10*1024*1024+1)
         await file.close()
@@ -183,7 +217,7 @@ def create_app(calibrations_dir: Path | None=None) -> FastAPI:
             'rows':[asdict(row) for row in rows],'material_sets':sorted({r.material_set_id for r in rows}),
             'source_name':file.filename,'data_hash':datasets[key]['hash']}
 
-    @app.post('/api/v1/calibration/fit')
+    @app.post('/api/v1/calibration/fit',response_model=FitResponse)
     def fit(body: FitRequest):
         data=datasets.get(body.dataset_id)
         if data is None:
@@ -195,11 +229,17 @@ def create_app(calibrations_dir: Path | None=None) -> FastAPI:
         results=fit_all(arrays)
         diagnostics={name:[] for name in results}
         eligible=[row for row in rows if body.age_policy=='convert' or row.age_days==28]
-        for row,measured in zip(eligible,arrays.strength_mpa):
-            report=run_mode_b(_row_inputs(row))
-            state=MixState(report.cement_kg_m3,report.cement_kg_m3,report.water.effective_water_kg,
-                report.wc,report.wcm,report.air_pct,row.air_entrained,report.volumes.cement_m3,
-                report.volumes.water_m3,report.volumes.air_m3,row.cement_type,row.curing,28)
+        for row,wc,measured in zip(eligible,arrays.wc,arrays.strength_mpa):
+            # Diagnostics need the physical state, not 244 plot samples per row.
+            # Reuse the core physical steps without repeatedly building a full report.
+            coarse=aggregate_moisture('CA',row.ca_kg_m3,row.weight_basis,row.ca_absorption_pct,row.ca_mc_pct)
+            fine=aggregate_moisture('FA',row.fa_kg_m3,row.weight_basis,row.fa_absorption_pct,row.fa_mc_pct)
+            water=effective_water(row.water_kg_m3,coarse,fine).effective_water_kg
+            volumes=volume_check((s.Binder('cement',row.cement_kg_m3,row.cement_sg,'cement'),),water,
+                coarse.ssd_kg,row.ca_sg_ssd,fine.ssd_kg,row.fa_sg_ssd,row.air_pct)
+            state=MixState(row.cement_kg_m3,row.cement_kg_m3,water,float(wc),float(wc),
+                row.air_pct,row.air_entrained,volumes.cement_m3,volumes.water_m3,
+                volumes.air_m3,row.cement_type,row.curing,28)
             for name,result in results.items():
                 parameters=ModelConstants(name,'in_memory_fit',result.values,'In-sample fit; not saved',False,None,28)
                 predicted=MODEL_REGISTRY[name](state,parameters).mean_28d_mpa

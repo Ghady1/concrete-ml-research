@@ -153,6 +153,86 @@ export interface components {
       /** File */
       file: string;
     };
+    /** CalibrationRow */
+    CalibrationRow: {
+      /** Mix Id */
+      mix_id: string;
+      /** Material Set Id */
+      material_set_id: string;
+      /** Cement Kg M3 */
+      cement_kg_m3: number;
+      /** Water Kg M3 */
+      water_kg_m3: number;
+      /** Ca Kg M3 */
+      ca_kg_m3: number;
+      /** Fa Kg M3 */
+      fa_kg_m3: number;
+      /**
+       * Weight Basis
+       * @enum {string}
+       */
+      weight_basis: "oven_dry" | "ssd" | "as_received";
+      /** Cement Sg */
+      cement_sg: number;
+      /**
+       * Cement Type
+       * @enum {string}
+       */
+      cement_type: "I" | "II" | "III" | "IV" | "V";
+      /** Ca Sg Ssd */
+      ca_sg_ssd: number;
+      /** Ca Drd Kg M3 */
+      ca_drd_kg_m3: number;
+      /** Ca Absorption Pct */
+      ca_absorption_pct: number;
+      /** Ca Mc Pct */
+      ca_mc_pct: number;
+      /** Nmas Mm */
+      nmas_mm: number;
+      /**
+       * Ca Shape
+       * @enum {string}
+       */
+      ca_shape: "angular" | "subangular" | "gravel_with_crushed" | "round_gravel";
+      /** Fa Sg Ssd */
+      fa_sg_ssd: number;
+      /** Fa Absorption Pct */
+      fa_absorption_pct: number;
+      /** Fa Mc Pct */
+      fa_mc_pct: number;
+      /** Fa Fm */
+      fa_fm: number;
+      /** Air Pct */
+      air_pct: number;
+      /** Air Entrained */
+      air_entrained: boolean;
+      /**
+       * Curing
+       * @enum {string}
+       */
+      curing: "moist" | "steam";
+      /** Age Days */
+      age_days: number;
+      /**
+       * Specimen
+       * @enum {string}
+       */
+      specimen: "cylinder_150x300" | "cube_150";
+      /** N Specimens */
+      n_specimens: number;
+      /** Measured Strength Mpa */
+      measured_strength_mpa: number;
+      /** Strength Std Mpa */
+      strength_std_mpa: number | null;
+      /** Measured Slump Mm */
+      measured_slump_mm: number;
+      /** Test Date */
+      test_date: string;
+      /** Notes */
+      notes: string;
+      /** Cube To Cylinder Factor */
+      cube_to_cylinder_factor?: number | null;
+    };
     /** CementStep */
     CementStep: {
       /** Cement From Wc Kg M3 */
@@ -238,6 +318,17 @@ export interface components {
       /** Prediction Error */
       prediction_error?: string | null;
     };
+    /** DiagnosticPoint */
+    DiagnosticPoint: {
+      /** Mix Id */
+      mix_id: string;
+      /** Measured Mpa */
+      measured_mpa: number;
+      /** Predicted Mpa */
+      predicted_mpa: number;
+      /** Residual Mpa */
+      residual_mpa: number;
+    };
     /** FieldWeights */
     FieldWeights: {
       /**
@@ -303,6 +394,48 @@ export interface components {
        * @default false
        */
       accept_valid_subset?: boolean;
+    };
+    /** FitResponse */
+    FitResponse: {
+      /** Fit Id */
+      fit_id: string;
+      /** Material Set Id */
+      material_set_id: string;
+      /** Results */
+      results: {
+        [key: string]: components["schemas"]["FitResult"];
+      };
+      /** Diagnostics */
+      diagnostics: {
+        [key: string]: components["schemas"]["DiagnosticPoint"][];
+      };
+      /** Eligible Rows */
+      eligible_rows: number;
+      /** Excluded Rows */
+      excluded_rows: number;
+      /** Converted Rows */
+      converted_rows: number;
+      /** Data Hash */
+      data_hash: string;
+    };
+    /** FitResult */
+    FitResult: {
+      /** Model Name */
+      model_name: string;
+      /** Values */
+      values: {
+        [key: string]: number;
+      };
+      /** N Rows */
+      n_rows: number;
+      /** R2 */
+      r2: number;
+      /** R2 Space */
+      r2_space: string;
+      /** R2 Mpa */
+      r2_mpa: number;
+      /** Rmse Mpa */
+      rmse_mpa: number;
     };
     /** Flag */
     Flag: {
@@ -628,6 +761,15 @@ export interface components {
       /** Flags */
       flags: components["schemas"]["Flag"][];
     };
+    /** RowIssue */
+    RowIssue: {
+      /** Row */
+      row: number;
+      /** Column */
+      column: string;
+      /** Message */
+      message: string;
+    };
     /** SaveRequest */
     SaveRequest: {
       /** Fit Id */
@@ -777,6 +919,23 @@ export interface components {
       status: components["schemas"]["Status"];
       /** Flags */
       flags: components["schemas"]["Flag"][];
+    };
+    /** UploadResponse */
+    UploadResponse: {
+      /** Dataset Id */
+      dataset_id: string;
+      /** Valid Count */
+      valid_count: number;
+      /** Errors */
+      errors: components["schemas"]["RowIssue"][];
+      /** Rows */
+      rows: components["schemas"]["CalibrationRow"][];
+      /** Material Sets */
+      material_sets: string[];
+      /** Source Name */
+      source_name: string;
+      /** Data Hash */
+      data_hash: string;
     };
     /** ValidationError */
     ValidationError: {
@@ -1029,7 +1188,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": unknown;
+          "application/json": components["schemas"]["UploadResponse"];
         };
       };
       /** @description Validation Error */
@@ -1051,7 +1210,7 @@ export interface operations {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": unknown;
+          "application/json": components["schemas"]["FitResponse"];
         };
       };
       /** @description Validation Error */

@@ -97,3 +97,21 @@ test('design steps and named comparison snapshots retain calculated values',asyn
   expect(shots[0].inputs.specified_fc_mpa).toBe(25);
   expect(shots[1].inputs.specified_fc_mpa).toBe(30);
 });
+
+test('calibration demo fits saves and becomes selectable without stale fits',async({page})=>{
+  await page.goto('/#calibration');
+  const fixture=await page.request.get('/api/v1/demo/calibration.csv');
+  await page.getByLabel('Lab mix log',{exact:true}).setInputFiles({name:'synthetic-demo.csv',mimeType:'text/csv',buffer:await fixture.body()});
+  await expect(page.getByText(/12 valid rows/)).toBeVisible();
+  await page.getByRole('button',{name:'Fit three strength models'}).click();
+  await expect(page.getByRole('heading',{name:'Predicted versus measured',exact:true})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Inspect the residuals',exact:true})).toBeVisible();
+  await page.getByRole('button',{name:'Save material-set fits'}).click();
+  await expect(page.getByRole('status')).toContainText('Saved SYNTHETIC-DEMO');
+  await page.getByRole('button',{name:/Age policy/}).click();
+  await page.getByRole('option',{name:'Convert other ages with the age equation'}).click();
+  await expect(page.getByRole('button',{name:'Save material-set fits'})).toHaveCount(0);
+  await page.getByRole('link',{name:'Evaluate',exact:true}).click();
+  await page.getByRole('button',{name:/Prediction constants/}).click();
+  await expect(page.getByRole('option',{name:'SYNTHETIC-DEMO',exact:true})).toBeVisible();
+});
