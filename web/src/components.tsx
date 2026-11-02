@@ -32,6 +32,14 @@ export function Numeric({ label, value, onChange, help, optional = false, error 
       aria-invalid={!!error} aria-describedby={help || error ? id + '-help' : undefined} placeholder={optional ? 'Not specified' : undefined}/>
     {(help || error) && <small id={id + '-help'} className={error ? 'error-text' : ''}>{error || help}</small>}</div>;
 }
+export function TextField({ label, value, onChange, help, optional, placeholder }: {
+  label: string; value: string; onChange: (value: string) => void; help?: string; optional?: boolean; placeholder?: string;
+}) {
+  const id = useId();
+  return <div className="field"><label htmlFor={id}>{label}{optional && <span className="optional"> optional</span>}</label>
+    <input id={id} value={value} onChange={event => onChange(event.target.value)} placeholder={placeholder} aria-describedby={help ? id + '-help' : undefined}/>
+    {help && <small id={id + '-help'}>{help}</small>}</div>;
+}
 export function Toggle({ label, checked, onChange, help }: { label: string; checked: boolean; onChange: (v: boolean) => void; help?: string }) {
   return <label className="toggle"><input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)}/>
     <span><strong>{label}</strong>{help && <small>{help}</small>}</span></label>;

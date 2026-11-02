@@ -71,5 +71,6 @@ professor decisions. Preserve concrete_ml and the original owner files.
 
 ## Status
 
-- Plan established; implementation begins with U0, followed by U1.
+- U0 complete: M22 verified and pushed at e0285af.
+- U1 complete: scientific transparency, field influence and independent checks.
 - U2–U7 remain planned, not implemented or release-audited.

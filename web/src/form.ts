@@ -2,28 +2,28 @@ import type { Metadata, MixInputs, ModeAInputs } from './api';
 export type Unit = 'SI' | 'US';
 export type Draft = Record<string, string | boolean>;
 export type Mode = 'evaluate' | 'design';
-export type FieldDef = { path: string; label: string; kind?: 'length' | 'stress' | 'density' | 'volume' | 'weight'; optional?: boolean; help?: string; choices?: string; text?: boolean };
+export type FieldDef = { path: string; label: string; kind?: 'length' | 'stress' | 'density' | 'volume' | 'weight'; optional?: boolean; help?: string; choices?: string; text?: boolean; placeholder?: string };
 export const materialFields = (mode: Mode): { title: string; description: string; fields: FieldDef[] }[] => [
   { title: 'Cement', description: 'The binder that brings the mixture together.', fields: [
-    ...(mode === 'evaluate' ? [{ path: 'cement.weight_kg', label: 'Cement content', kind: 'weight' as const }, { path: 'cement.name', label: 'Cement name', text: true }] : []),
-    { path: mode === 'evaluate' ? 'cement.sg' : 'cement_sg', label: 'Specific gravity', help: 'Density relative to water; dimensionless.' },
-    { path: 'cement_type', label: 'Cement type', choices: 'cement_type' },
-    ...(mode === 'evaluate' ? [{ path: 'cement_strength_class', label: 'Strength class', text: true, optional: true }] : [])] },
+    ...(mode === 'evaluate' ? [{ path: 'cement.weight_kg', label: 'Cement content', kind: 'weight' as const, help: 'Affects water/cement ratio, cement volume and strength predictions.' }, { path: 'cement.name', label: 'Cement name', text: true, placeholder: 'Product or laboratory material ID', help: 'Record only. A name does not select material properties or calibration.' }] : []),
+    { path: mode === 'evaluate' ? 'cement.sg' : 'cement_sg', label: 'Specific gravity', help: 'Density relative to water. Determines cement volume and affects Feret strength.' },
+    { path: 'cement_type', label: 'Cement type', choices: 'cement_type', help: 'Used for age development. Types II, IV and V use Type I coefficients with a warning.' },
+    ...(mode === 'evaluate' ? [{ path: 'cement_strength_class', label: 'Strength class', text: true, optional: true, placeholder: 'e.g. 42.5 N, from the certificate', help: 'Record only. Cement certificate designation; not the concrete target strength. Leave blank if unknown.' }] : [])] },
   { title: 'Coarse aggregate', description: 'Measured on a consistent SSD specific-gravity basis.', fields: [
     ...(mode === 'evaluate' ? [{ path: 'coarse_kg', label: 'Coarse aggregate', kind: 'weight' as const }] : []),
-    { path: 'coarse.sg_ssd', label: 'SSD specific gravity' }, { path: 'coarse.drd_kg_m3', label: 'Dry-rodded density', kind: 'density' },
+    { path: 'coarse.sg_ssd', label: 'SSD specific gravity', help: 'Pairs with SSD mass for absolute volume.' }, { path: 'coarse.drd_kg_m3', label: 'Dry-rodded density', kind: 'density', help: mode === 'evaluate' ? 'Used for packing checks; does not directly change strength.' : 'Determines coarse aggregate quantity from the reference bulk ratio.' },
     { path: 'coarse.absorption_pct', label: 'Absorption (%)', help: 'Percentage of oven-dry mass.' },
     { path: 'coarse.mc_pct', label: 'Total moisture (%)', help: 'Includes absorbed and surface moisture; OD denominator.' },
-    { path: 'coarse.shape', label: 'Particle shape', choices: 'shape' },
+    { path: 'coarse.shape', label: 'Particle shape', choices: 'shape', help: mode === 'evaluate' ? 'Used in the heuristic water-table workability estimate, not directly in strength.' : 'Adjusts reference mixing-water demand.' },
     { path: 'nmas_mm', label: 'Nominal maximum size', kind: 'length', optional: mode === 'design', help: mode === 'design' ? 'Clear this field to select size from geometry below.' : 'Nominal maximum size differs from maximum sieve size.' }] },
   { title: 'Fine aggregate', description: 'Sand properties and moisture determine both volume and free water.', fields: [
     ...(mode === 'evaluate' ? [{ path: 'fine_kg', label: 'Fine aggregate', kind: 'weight' as const }] : []),
     { path: 'fine.sg_ssd', label: 'Fine SSD specific gravity' }, { path: 'fine.absorption_pct', label: 'Fine absorption (%)' },
-    { path: 'fine.mc_pct', label: 'Fine total moisture (%)' }, { path: 'fine.fm', label: 'Fineness modulus', help: 'An index of grading, not a particle size.' }] },
+    { path: 'fine.mc_pct', label: 'Fine total moisture (%)', help: 'Percent of oven-dry mass; free water is total moisture minus absorption.' }, { path: 'fine.fm', label: 'Fineness modulus', help: mode === 'evaluate' ? 'Grading index used in packing comparison, not directly in the strength equations.' : 'Grading index used to select the coarse aggregate bulk ratio.' }] },
 ];
 export const conditionFields: FieldDef[] = [
-  { path: 'exposure', label: 'Exposure', choices: 'exposure' }, { path: 'curing', label: 'Curing', choices: 'curing' },
-  { path: 'element', label: 'Element', choices: 'element', optional: true },
+  { path: 'exposure', label: 'Exposure', choices: 'exposure', help: 'Selects automatic air where applicable; design mode also checks exposure minimums.' }, { path: 'curing', label: 'Curing', choices: 'curing', help: 'Selects age-development coefficients; base 28-day means remain unchanged.' },
+  { path: 'element', label: 'Element', choices: 'element', optional: true, help: 'Design: default slump limits. Evaluate: workability range comparison.' },
 ];
 export const advancedFields = (mode: Mode): FieldDef[] => [
   { path: 'sigma_mpa', label: 'Strength standard deviation', kind: 'stress', optional: true },
@@ -31,7 +31,7 @@ export const advancedFields = (mode: Mode): FieldDef[] => [
   ...(mode === 'evaluate' ? [
     { path: 'admixtures.air_entrainer_ml_per_pct_per_100kg', label: 'Air-entrainer rate (ml / air % / 100 kg cement)', optional: true },
     { path: 'admixtures.water_reducer_pct', label: 'Water-reducer information (%)', optional: true, help: 'Mode B uses entered water; this percentage is not applied again.' },
-    { path: 'admixtures.superplasticizer_kg', label: 'Superplasticizer', kind: 'weight' as const, optional: true },
+    { path: 'admixtures.superplasticizer_kg', label: 'Superplasticizer', kind: 'weight' as const, optional: true, help: 'Record only. Effects on strength and workability are not modeled.' },
     { path: 'specimen', label: 'Specimen', choices: 'specimen' },
     { path: 'cube_to_cylinder_factor', label: 'User cube-to-cylinder factor', optional: true, help: 'No default is assumed. Obtain an accepted factor for your specimens.' },
   ] : [

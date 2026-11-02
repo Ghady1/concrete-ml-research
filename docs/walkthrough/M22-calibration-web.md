@@ -21,6 +21,6 @@ remain in-sample; there is no new validation claim.
 Hand exercises:
 1. Check the seeded Abrams demo equation A=100, B=10 at w/c=0.5 before noise.
 2. For measured 30 and predicted 32 MPa, verify the displayed residual sign
-   against the labelled residual definition (predicted minus measured).
+   against the labelled residual definition (measured minus predicted).
 3. Change the age policy after fitting and verify Save becomes unavailable until
    refitting; restarting the server requires re-uploading the source.
