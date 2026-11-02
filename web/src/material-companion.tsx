@@ -1,13 +1,13 @@
 export type MaterialKind = 'cement' | 'coarse' | 'fine' | 'water';
 
 /** Original decorative vectors: no material properties or analysis state implied. */
-export function MaterialCompanion({ material }: { material: MaterialKind }) {
+export function MaterialCompanion({ material, reaction = 0, rounded = false }: { material: MaterialKind; reaction?: number; rounded?: boolean }) {
   const color = { cement: '#c6c7b8', coarse: '#a7b6a0', fine: '#dfbd87', water: '#8ac6cc' }[material];
   const ink = '#354c46';
   return <span className={'material-companion companion-' + material} aria-hidden="true">
     <svg viewBox="0 0 144 138" focusable="false">
       <ellipse cx="74" cy="126" rx="39" ry="5" fill="#354c46" opacity=".08"/>
-      <g className="companion-body" stroke={ink} strokeWidth="2.3" strokeLinejoin="round" strokeLinecap="round">
+      <g key={reaction} className="companion-body" stroke={ink} strokeWidth="2.3" strokeLinejoin="round" strokeLinecap="round">
         <path d="M48 103Q46 119 36 120Q31 129 45 127L59 118M87 108Q88 121 100 120Q110 127 99 128L83 123" fill={color}/>
         <path d="M39 70Q22 75 27 88Q30 94 34 87M106 72Q121 77 118 88" fill="none"/>
         {material === 'cement' && <>
@@ -17,8 +17,8 @@ export function MaterialCompanion({ material }: { material: MaterialKind }) {
           <path d="M56 43L67 42M85 103L97 101" opacity=".4"/>
         </>}
         {material === 'coarse' && <>
-          <path d="M35 74L44 43L68 32L98 40L111 68L103 103L74 114L44 103Z" fill={color}/>
-          <path d="M44 43L61 58L68 32M61 58L35 74M98 40L88 57L111 68M103 103L87 94L74 114" fill="none" opacity=".38"/>
+          {rounded ? <ellipse cx="73" cy="74" rx="39" ry="40" fill={color}/> : <path d="M35 74L44 43L68 32L98 40L111 68L103 103L74 114L44 103Z" fill={color}/>}
+          {!rounded && <path d="M44 43L61 58L68 32M61 58L35 74M98 40L88 57L111 68M103 103L87 94L74 114" fill="none" opacity=".38"/>}
           <path d="M48 95L55 99M96 72L100 79" opacity=".35"/>
         </>}
         {material === 'fine' && <>

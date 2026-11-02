@@ -78,4 +78,4 @@ professor decisions. Preserve concrete_ml and the original owner files.
 - U4 complete: isolated water/cement/age exploration with explicit adoption.
 - U5 complete: versioned notebook, comparison controls and analysis fingerprints.
 - U6 complete: selected fits, grouped holdout, diagnostics and atomic parameter revisions.
-- U7 release audit and teaching/extension documentation remain in progress.
+- U7 implementation delivered; release checks and the explicit Firefox environment exception are recorded in docs/walkthrough/U7-release-audit.md.

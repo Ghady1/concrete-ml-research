@@ -15,7 +15,7 @@ const descriptions: Record<string, [string, string]> = {
 };
 const limitations = new Set(['UNCALIBRATED_MODEL', 'UNVERIFIED_LITERATURE_PRESET', 'SCM_NOT_SUPPORTED', 'SUPERPLASTICIZER_NOT_MODELED', 'WATER_REDUCER_NOT_MODELED', 'SLUMP_IGNORES_ADMIXTURES', 'AIR_ENTRAINER_PRODUCT_SPECIFIC', 'CEMENT_TYPE_APPROXIMATION', 'AGE_MODEL_RANGE']);
 
-export function Diagnostics({ flags }: { flags: Flag[] }) {
+export function Diagnostics({ flags, expanded = false }: { flags: Flag[]; expanded?: boolean }) {
   const groups = new Map<string, Flag[]>();
   for (const flag of flags) {
     const key = flag.severity + ':' + flag.code;
@@ -29,7 +29,7 @@ export function Diagnostics({ flags }: { flags: Flag[] }) {
     return <div className="diagnostic-group" key={name}><h3>{name} <span className="badge">{entries.reduce((total, [, list]) => total + list.length, 0)}</span></h3>{entries.map(([key, list]) => {
       const flag = list[0];
       const [title, action] = descriptions[flag.code] || (flag.code.startsWith('SSD_MC_MISMATCH') ? descriptions.SSD_MC_MISMATCH : [pretty(flag.code), 'Inspect the values and source assumptions in “Show the engineering”; edit inputs and rerun if needed.']);
-      return <details className={'flag ' + flag.severity} key={key}><summary><span>{title}</span><small>{flag.severity}{list.length > 1 ? ` · ${list.length} notices` : ''}</small></summary><p>{action}</p><div className="technical-messages"><strong>Detected values and technical detail</strong>{list.map((item, i) => <p key={i}>{item.message}</p>)}<code>{flag.code}</code></div></details>;
+      return <details className={'flag ' + flag.severity} key={key} open={expanded || undefined}><summary><span>{title}</span><small>{flag.severity}{list.length > 1 ? ` · ${list.length} notices` : ''}</small></summary><p>{action}</p><div className="technical-messages"><strong>Detected values and technical detail</strong>{list.map((item, i) => <p key={i}>{item.message}</p>)}<code>{flag.code}</code></div></details>;
     })}</div>;
   })}{!flags.length && <p>No engine flags were returned. This does not establish experimental validation.</p>}</section>;
 }

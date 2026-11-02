@@ -13,7 +13,7 @@ export function figureSVG(source: SVGElement, title: string, note: string): { te
   const chartHeight = Math.max(1, source.getBoundingClientRect().height);
   const limit = Math.max(25, Math.floor(width / 7));
   const lines: string[] = [];
-  for (const text of [title, note]) {
+  for (const text of [title, note + ' Research output; not a certified structural design value.']) {
     let line = '';
     for (const word of text.split(' ')) {
       if (line && line.length + word.length > limit) { lines.push(line); line = ''; }

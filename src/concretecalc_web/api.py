@@ -135,7 +135,7 @@ class FitResponse(BaseModel):
 def create_app(calibrations_dir: Path | None=None) -> FastAPI:
     """Create isolated process-local upload/fit caches; persisted fits use existing store."""
     app=FastAPI(title='Concrete Research Studio',version='0.3.0')
-    directory=calibrations_dir or Path(__file__).resolve().parents[2]/'calibrations'
+    directory=calibrations_dir or Path.cwd()/'calibrations'
     datasets: OrderedDict=OrderedDict()
     fits: OrderedDict=OrderedDict()
     calibration_lock=RLock()

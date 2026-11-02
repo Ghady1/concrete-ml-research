@@ -87,3 +87,14 @@ These sources support conceptual interpretation. They do not mark any packaged
 reference table as primary-verified. Professor questions remain in
 OPEN_QUESTIONS.md, especially moisture convention, slump band/midpoint reading,
 specimen conversion, age normalization and required-strength rule applicability.
+
+## Studio 2.0 dispositions
+
+The findings above describe the baseline. U3 now exposes curve/table coverage
+and explicitly describes sweep extrapolation separately from the selected mix
+lookup policy. U5 records runtime/data/parameter/input fingerprints. U6 adds
+undefined constant-target R2, MAE/default comparisons, grouped internal holdout,
+fit context, condition checks and atomic saved revisions. Residual documentation
+now consistently uses measured minus predicted. None of these changes verify
+all course data or establish external laboratory accuracy. Fits remain equally
+weighted per row; n_specimens and measured strength SD are records, not weights.

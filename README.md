@@ -1,6 +1,6 @@
-# Concrete research calculator
+# Concrete Research Studio
 
-Non-ML research engine and Streamlit app for the LAU project **AI-Assisted
+Local React/TypeScript research studio, pure Python non-ML engine and Streamlit fallback for the LAU project **AI-Assisted
 Prediction of Sustainable Concrete Properties**. The calculator implements the
 approved CIE308/ACI course methods. Mode B predicts from batch weights; Mode A
 produces a ten-step course mix design and can send it back through Mode B.
@@ -11,24 +11,70 @@ Reference tables remain unverified against primary standards. The course PDF
 is not in this repository. Professor questions, including specimen conversion,
 moisture basis and coefficient applicability, remain in [OPEN_QUESTIONS.md](OPEN_QUESTIONS.md).
 
-## Windows PowerShell setup
+## Run the prepared studio
 
-From this checkout, use Python 3.12 (tested). The package declares Python 3.10+;
-the original 3.10.0 installation had a pytest internal error, so prefer a
-maintained patch release or Python 3.12.
+From this checkout in PowerShell:
+
+```powershell
+.\.venv\Scripts\python.exe -m concretecalc_web
+```
+
+Open http://127.0.0.1:8000. Keep the terminal open; Ctrl+C stops it. For a port
+conflict, add `--port 8001` and use http://127.0.0.1:8001. The server binds only
+to loopback. After code updates, stop/restart Python and refresh the browser.
+
+The prepared installation includes compiled frontend assets. Node and internet
+are not needed to run it. On this machine the build is already prepared.
+
+## Fresh source checkout setup (PowerShell)
+
+Python 3.12 is tested; the package declares Python 3.10+. Use a maintained patch
+release. Node is required only to install/build frontend sources.
 
 ```powershell
 py -3.12 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e ".[dev,calibration,app]"
+.\.venv\Scripts\python.exe -m pip install -e ".[web,calibration,dev,app]"
+Push-Location web
+npm ci
+npm run build
+Pop-Location
+.\.venv\Scripts\python.exe -m concretecalc_web
+```
+
+Activation is optional. The app extra keeps the original Streamlit fallback:
+
+```powershell
 .\.venv\Scripts\python.exe -m streamlit run app/streamlit_app.py
 ```
 
-Activation is optional with these commands. Open the local URL printed by
-Streamlit. Choose Mode B (default), Mode A or Calibration in the sidebar.
-SI is default. Displaying US units converts lengths to inches, density to pcf,
-strength to psi and contents to lb/yd3. Actual-batch mode instead uses lb and
-yd3. Changing units preserves the physical values. JSON/CSV exports are labelled SI.
-The lab CSV/Excel schema is always SI.
+SI/US changes preserve physical quantities. Actual-batch inputs use kg/lb;
+per-volume inputs use kg/m3 or lb/yd3. Intended yield is a declared target,
+not automatic volume balancing. Numeric research exports retain canonical SI;
+figure/comparison exports label their displayed units. Lab CSV/Excel is always SI.
+
+## Studio research workflow
+
+1. **Examples** explains a baseline, moisture contributions, cement overfill and
+   two course designs. Examples are not laboratory evidence.
+2. **Evaluate/Design** keeps drafts separate from calculated snapshots. Run
+   deliberately; inspect the governing design constraint and both moisture bases.
+3. **Show the engineering** exposes inputs, water, volumes, constants and age.
+   Diagnostics separate engineering concerns from research limitations.
+4. **Mix Explorer** changes water, cement or age hypothetically using the same
+   engine. Original snapshots stay frozen until explicit draft adoption.
+5. **Compare** stores up to three snapshots; rename/describe/duplicate, select a
+   reference, inspect signed differences and export the notebook. Local persistence
+   is opt-in. Export JSON before clearing browser data; this is not a backup service.
+6. **Calibrate** validates local data, selects equations and optionally performs
+   a grouped internal holdout. Save explicitly; replacement preserves revisions.
+   Independent external validation is still required for accuracy claims.
+7. **Report** exports snapshot JSON/CSV, figure SVG/3x PNG/plotted CSV, and a
+   browser print layout. Choose Print / PDF, wait for all sections to render,
+   and use the browser's Save as PDF option. Return to tab view afterwards.
+
+See [the offline demonstration guide](docs/studio-demo.md),
+[the scientific audit](docs/scientific-audit.md), and
+[future constituent boundaries](docs/future-constituents.md).
 
 The original `concrete_ml` package, its engineering tests and owner
 `requirements.txt` are preserved. That requirements file is a historical
@@ -176,8 +222,11 @@ interactions including upload/fit/save. Matplotlib uses the Agg backend so the
 app never opens a native Tk window from a worker thread. Final results and
 packaged-wheel checks are recorded in `docs/walkthrough/M16-hardening.md`.
 
-Latest full verification: **655 tests passed, no skips; 96% statement coverage**
+Historical M16 verification: **655 tests passed, no skips; 96% statement coverage**
 across concretecalc and app. `pip check` passed. An isolated installed-wheel
 check loaded all 18 reference files and produced a Mode B JSON report without
 importing UI/dataframe dependencies. Optional calibration/UI tests skip when
 their corresponding extras are not installed; use all extras for full verification.
+
+Studio 2.0 verification is recorded in `docs/walkthrough/U7-release-audit.md`.
+The historical coverage figure above does not describe the new web layer.

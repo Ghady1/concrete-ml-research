@@ -55,8 +55,8 @@ Every milestone is committed and pushed separately to the existing approved bran
 - M20: complete; implemented, verified and pushed separately (see Git history).
 - M21: complete; implemented, verified and pushed separately (see Git history).
 - M22: complete; calibration lifecycle, typed diagnostics and Chrome/Edge verification.
-- M23: examples, print/export and offline demonstration package — pending.
-- M24: numerical/API/browser/accessibility/visual/offline release audit — pending.
+- M23: delivered through U2/U3/U7: examples, print/export and offline package.
+- M24: audit delivered through U7; Chromium/Chrome/Edge/WebKit verified, Firefox environment exception recorded (not a pass).
 
 Acceptance: preserve all 655 tests; API/direct-engine numerical parity; browser
 wheel/focus/unit/stale/export tests; all three workflows; accessibility and

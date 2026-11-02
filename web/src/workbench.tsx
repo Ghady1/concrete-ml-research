@@ -19,8 +19,14 @@ export default function Workbench({ mode, metadata }: { mode: Mode; metadata: Me
   const draft = state.draft as Draft, unit = state.unit as Unit, options = state.options as Options;
   const snapshot = state.snapshot as Snapshot | null;
   const [view, setView] = useState<'inputs' | 'results'>('inputs');
+  useEffect(() => {
+    if (view !== 'results') return;
+    const frame = requestAnimationFrame(() => document.querySelector<HTMLElement>('main h1')?.focus({ preventScroll: true }));
+    return () => cancelAnimationFrame(frame);
+  }, [view]);
   const [busy, setBusy] = useState(false), [errors, setErrors] = useState<Record<string, string>>({}), [message, setMessage] = useState('');
   const [calibrations, setCalibrations] = useState<string[]>([]);
+  const [reactions, setReactions] = useState({ cement: 0, coarse: 0, fine: 0, water: 0 });
   useEffect(() => { try { sessionStorage.setItem(key, JSON.stringify(state)); } catch { setMessage('Browser storage is full. Export the current report before closing this tab.'); } }, [state, key]);
   useEffect(() => { request<{ items: string[] }>('/calibrations').then(r => setCalibrations(r.items)).catch(() => {}); }, []);
   useEffect(() => {
@@ -35,7 +41,11 @@ export default function Workbench({ mode, metadata }: { mode: Mode; metadata: Me
       if (found) { setState({ ...initial(), draft: draftFrom(found.inputs as ModeAInputs), unit: 'SI', snapshot: null, submitted: '' }); sessionStorage.removeItem('crs.load-example'); }
     }
   }, [mode, metadata]);
-  const update = (path: string, value: string | boolean) => setState((s: typeof state) => ({ ...s, draft: { ...s.draft, [path]: value } }));
+  const update = (path: string, value: string | boolean) => {
+    setState((s: typeof state) => ({ ...s, draft: { ...s.draft, [path]: value } }));
+    const material = path.startsWith('cement') ? 'cement' : path.startsWith('coarse') || path === 'nmas_mm' ? 'coarse' : path.startsWith('fine') ? 'fine' : path === 'water_kg' ? 'water' : null;
+    if (material) setReactions(current => ({ ...current, [material]: current[material] + 1 }));
+  };
   const setOptions = (value: Partial<Options>) => setState((s: typeof state) => ({ ...s, options: { ...s.options, ...value } }));
   const current = materialize(draft, template, mode, unit, metadata);
   const stale = !!snapshot && (Object.keys(current.errors).length > 0 || fingerprint({ inputs: current.inputs, options }) !== state.submitted);
@@ -87,8 +97,8 @@ export default function Workbench({ mode, metadata }: { mode: Mode; metadata: Me
         <Select label="Field moisture convention" value={String(draft.moisture_convention)} options={['course', 'strict'].map(value => ({ value, label: value === 'course' ? 'Course · slide convention' : 'Strict · SSD consistent' }))} onChange={v => update('moisture_convention', v)}/></div>
         <div className="toggle-row">{[['underwater', 'Underwater placement'], ['flatwork', 'Flatwork'], ['hand_consolidated', 'Hand-consolidated mass concrete']].map(([path, label]) => <Toggle key={path} label={label} checked={!!draft[path]} onChange={v => update(path, v)}/>)}</div></>}
     </Section>
-    <div id="materials">{materialFields(mode).map((group, i) => <Section key={group.title} title={group.title} eyebrow={'0' + (i + 2) + ' / Materials'} description={group.description} companion={<MaterialCompanion material={(['cement', 'coarse', 'fine'] as MaterialKind[])[i]}/>}><div className="fields">{group.fields.map(renderField)}</div></Section>)}</div>
-    {mode === 'evaluate' && <Section title="Water" description="Added water is separate from aggregate free water. Never count surface moisture twice." companion={<MaterialCompanion material="water"/>}><div className="fields">{renderField({ path: 'water_kg', label: 'Added water', kind: 'weight' })}</div></Section>}
+    <div id="materials">{materialFields(mode).map((group, i) => <Section key={group.title} title={group.title} eyebrow={'0' + (i + 2) + ' / Materials'} description={group.description} companion={<MaterialCompanion material={(['cement', 'coarse', 'fine'] as MaterialKind[])[i]} reaction={reactions[(['cement', 'coarse', 'fine'] as MaterialKind[])[i]]} rounded={draft['coarse.shape'] === 'round_gravel'}/>}><div className="fields">{group.fields.map(renderField)}</div></Section>)}</div>
+    {mode === 'evaluate' && <Section title="Water" description="Added water is separate from aggregate free water. Never count surface moisture twice." companion={<MaterialCompanion material="water" reaction={reactions.water}/>}><div className="fields">{renderField({ path: 'water_kg', label: 'Added water', kind: 'weight' })}</div></Section>}
     <Section id="conditions" title="Conditions & air" description="Use the conditions represented by your material set and test specimens."><div className="toggle-row"><Toggle label="Air entrained" checked={!!draft.air_entrained} onChange={v => update('air_entrained', v)}/><Toggle label="Normalize age equation to 28 days" checked={!!options.normalise_age_to_28d} onChange={v => setOptions({ normalise_age_to_28d: v })}/></div>
       <div className="fields">{conditionFields.map(renderField)}{mode === 'evaluate' && <>{renderField({ path: 'age_days', label: 'Test age (days)' })}{renderField({ path: 'air_pct', label: 'Air content (%)', optional: true, help: 'Leave blank for the ACI table default; an entered value is an explicit override.' })}</>}
       <Select label="Out-of-range policy" value={options.policy || 'extrapolate'} options={['extrapolate', 'clamp', 'raise'].map(value => ({ value, label: pretty(value) }))} onChange={v => setOptions({ policy: v as Options['policy'] })}/>

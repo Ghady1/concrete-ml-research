@@ -7,12 +7,12 @@ const equations: Record<string, string> = {
   feret: 'f28 = K × [Vc / (Vc + Vw + Va)]²',
 };
 
-export function EngineeringNotes({ report }: { report: Report }) {
-  return <details className="engineering-notes"><summary>Show the engineering</summary>
+export function EngineeringNotes({ report, expanded = false }: { report: Report; expanded?: boolean }) {
+  return <details className="engineering-notes" open={expanded || undefined}><summary>Show the engineering</summary>
     <p>Values below come from this calculated snapshot, in canonical SI. Display rounding never changes exported numbers.</p>
     <div className="engineering-grid">
       <section><h3>01 · Resolve aggregate moisture</h3><p>Free water = oven-dry mass × (total moisture − absorption) / 100. SSD entry uses absorption as effective moisture, giving zero free water.</p>
-        <div className="table-scroll"><table><thead><tr><th>Quantity</th><th>Coarse</th><th>Fine</th></tr></thead><tbody>
+        <div className="table-scroll" tabIndex={0} role="region" aria-label="Scrollable numerical table"><table><thead><tr><th>Quantity</th><th>Coarse</th><th>Fine</th></tr></thead><tbody>
           <tr><td>Declared basis</td><td colSpan={2}>{pretty(report.inputs.aggregate_weight_basis)}</td></tr>
           <tr><td>Oven-dry mass (kg/m³)</td><td>{fmt(report.coarse.oven_dry_kg, 4)}</td><td>{fmt(report.fine.oven_dry_kg, 4)}</td></tr>
           <tr><td>SSD mass (kg/m³)</td><td>{fmt(report.coarse.ssd_kg, 4)}</td><td>{fmt(report.fine.ssd_kg, 4)}</td></tr>
@@ -26,10 +26,10 @@ export function EngineeringNotes({ report }: { report: Report }) {
       </section>
       <section><h3>03 · Check occupied volume</h3><p className="equation">Vi = Wi / (SGi × 1000); Vair = air % / 100</p>
         <p>Aggregate SSD masses pair with SSD specific gravities. All volumes below are m³ per declared m³.</p>
-        <div className="table-scroll"><table><tbody>{[['Cement', report.volumes.cement_m3], ['Other binder', report.volumes.scm_m3], ['Effective water', report.volumes.water_m3], ['Coarse aggregate', report.volumes.coarse_m3], ['Fine aggregate', report.volumes.fine_m3], ['Air', report.volumes.air_m3], ['Total', report.volumes.total_m3], ['Signed closure: total − 1', report.volumes.closure_error_m3]].map(([name, value]) => <tr key={String(name)}><th>{name}</th><td>{fmt(Number(value), 6)}</td></tr>)}</tbody></table></div>
+        <div className="table-scroll" tabIndex={0} role="region" aria-label="Scrollable numerical table"><table><tbody>{[['Cement', report.volumes.cement_m3], ['Other binder', report.volumes.scm_m3], ['Effective water', report.volumes.water_m3], ['Coarse aggregate', report.volumes.coarse_m3], ['Fine aggregate', report.volumes.fine_m3], ['Air', report.volumes.air_m3], ['Total', report.volumes.total_m3], ['Signed closure: total − 1', report.volumes.closure_error_m3]].map(([name, value]) => <tr key={String(name)}><th>{name}</th><td>{fmt(Number(value), 6)}</td></tr>)}</tbody></table></div>
         <p>Declared yield is an input. These calculations do not automatically remove an ingredient to close the volume.</p>
       </section>
-      <section><h3>04 · Inspect the strength models</h3>{Object.entries(report.predictions).map(([name, model]) => <details key={name} className="source-row"><summary>{name === 'aci_table' ? 'ACI table' : pretty(name)} · {fmt(model.mean_28d_mpa)} MPa</summary><p className="equation">{equations[name] || 'See the model source.'}</p><p>State: w/c {fmt(report.wc, 6)}; Vc {fmt(report.volumes.cement_m3, 6)}, Vw {fmt(report.volumes.water_m3, 6)}, Va {fmt(report.volumes.air_m3, 6)} m³/m³.</p><p>{Object.entries(model.constants_used).map(([key, value]) => `${key} = ${fmt(value, 6)}`).join('; ') || 'Tabulated reference points; no fitted coefficient.'}</p><p>{model.constants_source}</p><p>{model.calibrated ? 'Parameters loaded from a stored fit; this is not proof of independent validation.' : 'Not calibrated to these local materials.'}</p></details>)}</section>
+      <section><h3>04 · Inspect the strength models</h3>{Object.entries(report.predictions).map(([name, model]) => <details key={name} className="source-row" open={expanded || undefined}><summary>{name === 'aci_table' ? 'ACI table' : pretty(name)} · {fmt(model.mean_28d_mpa)} MPa</summary><p className="equation">{equations[name] || 'See the model source.'}</p><p>State: w/c {fmt(report.wc, 6)}; Vc {fmt(report.volumes.cement_m3, 6)}, Vw {fmt(report.volumes.water_m3, 6)}, Va {fmt(report.volumes.air_m3, 6)} m³/m³.</p><p>{Object.entries(model.constants_used).map(([key, value]) => `${key} = ${fmt(value, 6)}`).join('; ') || 'Tabulated reference points; no fitted coefficient.'}</p><p>{model.constants_source}</p><p>{model.calibrated ? 'Parameters loaded from a stored fit; this is not proof of independent validation.' : 'Not calibrated to these local materials.'}</p></details>)}</section>
       <section><h3>05 · Adjust for age</h3><p className="equation">f(t) = f28 × t / (a + b × t)</p><p>Normalization, when selected, divides the factor by its value at 28 days. Conditions: {report.inputs.age_days} days, {pretty(report.inputs.curing || 'moist')} curing, cement Type {report.inputs.cement_type}.</p>
         {Object.entries(report.age_adjusted).map(([name, age]) => age && <p key={name}>{pretty(name)}: a = {age.a_days} days, b = {age.b}; factor {fmt(age.factor, 6)}; {age.normalised ? 'normalized' : 'literal'}; result <strong>{fmt(age.strength_mpa)} MPa</strong>.</p>)}
       </section>

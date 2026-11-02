@@ -16,7 +16,7 @@ test('material influence and engineering explanations remain accessible', async 
   expect(audit.violations.filter(v => ['critical', 'serious'].includes(v.impact || ''))).toEqual([]);
   for (const width of [1440, 768, 390]) {
     await page.setViewportSize({ width, height: 1000 });
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
   await page.getByRole('button', { name: 'Edit inputs' }).click();
   await page.getByRole('textbox', { name: /Cement content/ }).fill('-');
@@ -33,7 +33,7 @@ test('research pages provide working examples methods and visible attribution', 
     expect(audit.violations.filter(v => ['critical', 'serious'].includes(v.impact || ''))).toEqual([]);
     for (const width of [1440, 1280, 768, 390]) {
       await page.setViewportSize({ width, height: 1000 });
-      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     }
   }
   await expect(page.getByRole('link', { name: /CC BY 3.0/ })).toHaveAttribute('href', 'https://creativecommons.org/licenses/by/3.0/');

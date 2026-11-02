@@ -14,14 +14,15 @@ export function Logo({ large = false }: { large?: boolean }) {
 export function Select({ label, value, options, onChange, help }: {
   label: string; value: string; options: { value: string; label: string }[]; onChange: (v: string) => void; help?: string;
 }) {
+  const helpId = useId();
   return <div className="field"><Listbox value={value} onChange={onChange}>
       <Label className="field-label">{label}</Label>
-      <ListboxButton className="select">{options.find(x => x.value === value)?.label || value}<ChevronDown size={16}/></ListboxButton>
+      <ListboxButton className="select" aria-describedby={help ? helpId : undefined}>{options.find(x => x.value === value)?.label || value}<ChevronDown size={16}/></ListboxButton>
       <ListboxOptions anchor="bottom start" modal={false} className="select-options">
         {options.map(option => <ListboxOption key={option.value} value={option.value} className="select-option">
           <span>{option.label}</span>{option.value === value && <Check size={16}/>}</ListboxOption>)}
       </ListboxOptions>
-    </Listbox>{help && <small>{help}</small>}</div>;
+    </Listbox>{help && <small id={helpId}>{help}</small>}</div>;
 }
 export function Numeric({ label, value, onChange, help, optional = false, error }: {
   label: string; value: string; onChange: (v: string) => void; help?: string; optional?: boolean; error?: string;
@@ -49,7 +50,7 @@ export function Section({ title, eyebrow, children, id, description, companion }
     <h2>{title}</h2>{description && <p>{description}</p>}</div>{companion}</div>{children}</section>;
 }
 export function PageHeading({ eyebrow, title, children }: { eyebrow: string; title: string; children?: ReactNode }) {
-  return <div className="page-heading"><span className="eyebrow">{eyebrow}</span><h1>{title}</h1>{children && <p>{children}</p>}</div>;
+  return <div className="page-heading"><span className="eyebrow">{eyebrow}</span><h1 tabIndex={-1}>{title}</h1>{children && <p>{children}</p>}</div>;
 }
 export function Home() {
   return <>
