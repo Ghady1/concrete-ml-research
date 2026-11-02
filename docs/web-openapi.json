@@ -1440,8 +1440,7 @@
           },
           "examples": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/WorkedExample"
             },
             "type": "array",
             "title": "Examples"
@@ -3134,6 +3133,33 @@
           "flags"
         ],
         "title": "WcStep"
+      },
+      "WorkedExample": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "inputs": {
+            "$ref": "#/components/schemas/ModeAInputs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "inputs"
+        ],
+        "title": "WorkedExample"
       }
     }
   }

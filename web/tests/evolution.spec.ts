@@ -23,3 +23,25 @@ test('material influence and engineering explanations remain accessible', async 
   await page.getByRole('button', { name: /View last report/ }).click();
   await expect(page.getByRole('status')).toContainText('Inputs changed');
 });
+
+test('research pages provide working examples methods and visible attribution', async ({ page }) => {
+  for (const route of ['methods', 'examples', 'credits']) {
+    await page.goto('/#' + route);
+    await expect(page.locator('main h1')).toBeVisible();
+    await expect(page.getByText(/next workspace is being connected/)).toHaveCount(0);
+    const audit = await new AxeBuilder({ page }).analyze();
+    expect(audit.violations.filter(v => ['critical', 'serious'].includes(v.impact || ''))).toEqual([]);
+    for (const width of [1440, 1280, 768, 390]) {
+      await page.setViewportSize({ width, height: 1000 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    }
+  }
+  await expect(page.getByRole('link', { name: /CC BY 3.0/ })).toHaveAttribute('href', 'https://creativecommons.org/licenses/by/3.0/');
+  await page.goto('/#examples');
+  await page.getByRole('button', { name: 'Load evaluation example →', exact: true }).nth(1).click();
+  await expect(page.getByRole('textbox', { name: /Fine total moisture/ })).toHaveValue('5');
+  await page.getByRole('button', { name: 'Run analysis', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Research limitations', exact: false })).toBeVisible();
+  await page.getByText('Calculated input snapshot · canonical SI', { exact: true }).click();
+  await expect(page.getByText('These are the submitted quantities', { exact: false })).toBeVisible();
+});

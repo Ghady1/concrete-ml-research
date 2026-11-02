@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { Listbox, ListboxButton, ListboxOptions, ListboxOption, Label } from '@headlessui/react';
 import { Check, ChevronDown, ArrowUpRight, ArrowRight, FlaskConical, Layers3, Ruler } from 'lucide-react';
 import { pretty } from './api';
@@ -70,9 +70,4 @@ export function Home() {
       <div><span className="eyebrow">Ingredients → understanding</span><h2>The details make<br/>the difference.</h2><p>Moisture changes effective water. Aggregate changes the space available for paste. A small shift in water-to-cement ratio changes the strength estimate.</p><p>This studio makes those relationships visible, while keeping assumptions, reference sources and limits close at hand.</p><a className="text-link" href="#methods">Explore the methods <ArrowUpRight size={17}/></a></div></section>
     <section className="closing-note"><Logo large/><p>Observe carefully.<br/><em>Understand what follows.</em></p><a className="button" href="#examples">Open the guided demonstration <ArrowRight size={17}/></a></section>
   </>;
-}
-export function ComingWorkspace() {
-  const [value, setValue] = useState('350'); const [basis, setBasis] = useState('ssd'); const [checked, setChecked] = useState(false);
-  return <><PageHeading eyebrow="Studio workbench" title="A little clarity, before the calculation.">Your inputs stay in one scrollable workspace. Nothing changes just because you move the wheel.</PageHeading>
-    <Section title="Material controls" description="These controls use ordinary text entry and nonmodal lists."><div className="fields"><Numeric label="Cement (kg/m³)" value={value} onChange={setValue}/><Select label="Aggregate basis" value={basis} options={['ssd', 'as_received', 'oven_dry'].map(value => ({ value, label: pretty(value) }))} onChange={setBasis}/></div><Toggle label="Air entrained" checked={checked} onChange={setChecked}/></Section><div style={{height:500}} aria-hidden="true"/></>;
 }

@@ -1,0 +1,45 @@
+import { PageHeading, Section } from './components';
+import { pretty, type Metadata } from './api';
+import credits from '../public/assets/credits.json';
+
+export default function ResearchPages({ route, metadata }: { route: string; metadata: Metadata }) {
+  function loadExample(id: string) { sessionStorage.setItem('crs.load-example', id); location.hash = 'design'; }
+  function loadEvaluation(kind: string) {
+    const inputs = structuredClone(metadata.defaults_b);
+    if (kind === 'moisture') { inputs.coarse.mc_pct = 3; inputs.fine.mc_pct = 5; }
+    if (kind === 'overfill') inputs.cement.weight_kg += 200;
+    sessionStorage.setItem('crs.load-evaluation', JSON.stringify(inputs)); location.hash = 'evaluate';
+  }
+  if (route === 'examples') return <><PageHeading eyebrow="Guided research" title="A mix is a good place to begin.">Explore a calculation, question its assumptions and compare an alternative. Every example here is illustrative or course-derived, not laboratory evidence.</PageHeading>
+    <ol className="workflow-steps"><li><strong>Enter</strong><span>Check the material basis and defaults.</span></li><li><strong>Inspect</strong><span>Run analysis; follow the water and volume.</span></li><li><strong>Explore</strong><span>Read the models and compare scenarios.</span></li><li><strong>Test</strong><span>Use lab data to calibrate, then validate independently.</span></li></ol>
+    <Section title="Investigate one relationship"><div className="example-grid">{[
+      ['baseline', 'A balanced starting point', 'Illustrative default quantities with SSD-conditioned aggregate. Begin with the effective water and volume checks.'],
+      ['moisture', 'Water you did not pour', 'The same entered aggregate masses with higher total moisture. Inspect the signed water contributions and changed w/c.'],
+      ['overfill', 'More cement, same declared yield', 'Adds 200 kg cement without removing aggregate. The volume check exposes the discrepancy instead of normalizing it away.'],
+    ].map(([id, name, description]) => <article key={id} className="example-card"><span className="eyebrow">Illustrative · no experimental claim</span><h3>{name}</h3><p>{description}</p><button className="button" onClick={() => loadEvaluation(id)}>Load evaluation example →</button></article>)}</div><p className="caption">Loading an example replaces the current draft in that workspace. Saved comparisons are unchanged.</p></Section>
+    <Section title="Follow the course design examples"><div className="example-grid">{metadata.examples.map(example => <article className="example-card" key={example.id}><span className="eyebrow">Course example · stated assumptions</span><h3>{example.name}</h3><p>{example.description}</p><button className="button" onClick={() => loadExample(example.id)}>Load course design →</button></article>)}</div><p>Missing-input choices are part of the example, not measurements. Inspect the design inputs, both field-moisture conventions and prediction-back discrepancies.</p></Section>
+    <div className="closing-note"><p>Ready for observations?</p><a href="#calibration" className="button">Explore synthetic calibration →</a></div></>;
+  if (route === 'credits') return <><PageHeading eyebrow="Sources & craft" title="Materials, honestly represented.">All photographs and fonts are bundled locally. These photographs illustrate materials and architecture; they are not specimens or experimental results from this project.</PageHeading><div className="credits-list">{credits.assets.map(asset => <article key={asset.file} className="credit-row">{asset.kind === 'photograph' && <img src={'/assets/' + asset.file} alt={'alt' in asset ? asset.alt : ''}/>}<div><h3>{asset.file}</h3><p>By {asset.author}. <a className="text-link" href={asset.source_url}>Original source ↗</a></p><p><a className="text-link" href={asset.license_url}>{asset.license} ↗</a></p><p>{asset.modifications}</p>{'local_license' in asset && <a className="text-link" href={'/assets/' + asset.local_license}>Bundled license text</a>}</div></article>)}</div><Section title="Original studio artwork"><p>The aggregate/water/specimen logo and cement, aggregate, sand and water companions are original SVG artwork made for this studio. They are decorative; they do not simulate material behavior or indicate engineering approval.</p></Section></>;
+  return <><PageHeading eyebrow="Methods & limitations" title="Useful results invite questions.">A deterministic, non-ML research calculator. The engine implements the documented course methods; a successful calculation does not certify a structural mix.</PageHeading>
+    <Section title="What the studio does"><p><strong>Evaluate</strong> starts with constituent quantities and an explicit aggregate mass basis. <strong>Design</strong> follows ten course proportioning steps and predicts the resulting mix back through the same engine. <strong>Calibrate</strong> fits equation constants to one material set.</p><p>The reference data are course transcriptions after ACI methods. Primary-standard table verification and local laboratory validation remain open research tasks.</p></Section>
+    <div className="example-grid">{[
+      ['Moisture and effective water', 'Total moisture and absorption use oven-dry mass as the denominator. Free water is signed. SSD entry sets effective moisture equal to absorption. Oven-dry entry is a dry-equivalent quantity paired with the entered moisture; it does not force moisture to zero.'],
+      ['Declared yield and absolute volume', 'Mass is normalized using intended batch yield. Constituent volume is mass/(specific gravity × 1000), with SSD mass and SSD specific gravity paired for aggregates. Air is an assumed or entered volume fraction. The total is shown without normalization to 100%.'],
+      ['Four strength relationships', 'ACI-table prediction inverts the required-average table. Abrams and Bolomey depend on w/c; Feret explicitly uses cement, water and air volumes. Default parametric constants fit the same course table, so agreement is not independent evidence of accuracy.'],
+      ['Age and specimens', 'The empirical age equation uses cement type and curing. Literal and normalized behavior are explicit. Types II/IV/V use Type I coefficients with a warning. Main predictions are cylinder-based; cube equivalence requires your conversion factor.'],
+      ['Heuristic workability', 'The number comes from inverting a mixing-water proportioning table. It is not a physical slump simulation or a validated prediction. The legacy placeholder band is not a confidence interval. Admixture effects are not modeled.'],
+      ['Calibration is not validation', 'Reported fitting diagnostics are in-sample. A saved parameter set is calibrated, not proven accurate for unseen mixes. Synthetic data demonstrates software behavior only. Repeated ages/specimens from one mix are not independent mixes for validation splitting.'],
+    ].map(([name, description]) => <article className="example-card" key={name}><h3>{name}</h3><p>{description}</p></article>)}</div>
+    <Section title="Inputs do different jobs"><div className="table-scroll"><table><thead><tr><th>Input</th><th>Role</th></tr></thead><tbody>{[
+      ['Cement name / strength class', 'Record only; no product recognition or automatic coefficient selection.'],
+      ['Specific gravity', 'Absolute volume; cement SG also affects Feret.'],
+      ['Fineness modulus / dry-rodded density', 'Packing checks in Evaluate; coarse aggregate proportion in Design.'],
+      ['Age / curing / cement type', 'Age-development adjustment, not a new base 28-day cement-specific fit.'],
+      ['Superplasticizer', 'Unsupported effect; recorded and flagged.'],
+      ['Water reducer', 'Evaluate uses actual entered water without applying reduction again. Design reduces reference water.'],
+      ['Air-entrainer rate', 'Dosage estimate only; does not predict achieved air.'],
+      ['Statistical inputs', 'Characteristic estimate or required-mean margin, not a modification to predicted mean.'],
+    ].map(([name, role]) => <tr key={name}><th>{name}</th><td>{role}</td></tr>)}</tbody></table></div></Section>
+    <Section title="Public context and sources"><p>The references below support interpretation; they do not mean every packaged table or coefficient is primary-verified.</p><ul className="source-links"><li><a href="https://www.concrete.org/Portals/0/Files/PDF/E1-16v3.pdf">ACI E1-16 · Aggregates for Concrete</a> — density and moisture definitions.</li><li><a href="https://www.concrete.org/frequentlyaskedquestions/faqid/738.aspx">ACI · How is workability measured and specified?</a></li><li><a href="https://www.nrmca.org/wp-content/uploads/2020/10/GuideToSpecs.pdf">NRMCA · Guide to Improving Specifications (2021)</a></li></ul><p>The exact implemented equations and constants appear in each report’s “Show the engineering” panel. Source links require internet; all application functions and local explanations work offline.</p></Section>
+  </>;
+}

@@ -56,13 +56,20 @@ class DesignResponse(BaseModel):
     prediction_error: str | None=None
 
 
+class WorkedExample(BaseModel):
+    id: str
+    name: str
+    description: str
+    inputs: s.ModeAInputs
+
+
 class Metadata(BaseModel):
     disclaimer: str
     defaults_b: s.MixInputs
     defaults_a: s.ModeAInputs
     choices: dict[str,list[str]]
     conversion_factors: dict[str,float]
-    examples: list[dict]
+    examples: list[WorkedExample]
 
 
 class FitRequest(BaseModel):

@@ -469,9 +469,7 @@ export interface components {
         [key: string]: number;
       };
       /** Examples */
-      examples: {
-          [key: string]: unknown;
-        }[];
+      examples: components["schemas"]["WorkedExample"][];
     };
     /** MixDesignReport */
     MixDesignReport: {
@@ -1028,6 +1026,16 @@ export interface components {
       wc_specified_table: number | null;
       /** Flags */
       flags: components["schemas"]["Flag"][];
+    };
+    /** WorkedExample */
+    WorkedExample: {
+      /** Id */
+      id: string;
+      /** Name */
+      name: string;
+      /** Description */
+      description: string;
+      inputs: components["schemas"]["ModeAInputs"];
     };
   };
   responses: never;

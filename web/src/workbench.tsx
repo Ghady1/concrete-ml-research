@@ -24,10 +24,15 @@ export default function Workbench({ mode, metadata }: { mode: Mode; metadata: Me
   useEffect(() => { try { sessionStorage.setItem(key, JSON.stringify(state)); } catch { setMessage('Browser storage is full. Export the current report before closing this tab.'); } }, [state, key]);
   useEffect(() => { request<{ items: string[] }>('/calibrations').then(r => setCalibrations(r.items)).catch(() => {}); }, []);
   useEffect(() => {
+    const evaluation = sessionStorage.getItem('crs.load-evaluation');
+    if (evaluation && mode === 'evaluate') {
+      try { setState({ ...initial(), draft: draftFrom(JSON.parse(evaluation)), unit: 'SI', snapshot: null, submitted: '' }); } catch { setMessage('The example could not be loaded.'); }
+      sessionStorage.removeItem('crs.load-evaluation');
+    }
     const example = sessionStorage.getItem('crs.load-example');
     if (example && mode === 'design') {
       const found = metadata.examples.find(x => x.id === example);
-      if (found) { setState({ ...initial(), draft: draftFrom(found.inputs as ModeAInputs) }); sessionStorage.removeItem('crs.load-example'); }
+      if (found) { setState({ ...initial(), draft: draftFrom(found.inputs as ModeAInputs), unit: 'SI', snapshot: null, submitted: '' }); sessionStorage.removeItem('crs.load-example'); }
     }
   }, [mode, metadata]);
   const update = (path: string, value: string | boolean) => setState((s: typeof state) => ({ ...s, draft: { ...s.draft, [path]: value } }));
