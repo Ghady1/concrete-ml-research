@@ -30,6 +30,18 @@ from concretecalc.tables.models import Lookup, Status, worst
 from concretecalc.units import psi_to_mpa
 
 
+def input_validation_limits() -> dict[str, float]:
+    """Return independent input-limit data for validation (PLAN M5).
+
+    Table-axis bounds are read from the source table rather than duplicated.
+    """
+    limits = dict(load_mapping('flag_thresholds').values)
+    grid = load_grid('bulk_volume_ca')
+    limits['fm.table_min'] = float(grid.cols[0])
+    limits['fm.table_max'] = float(grid.cols[-1])
+    return limits
+
+
 # ---------------------------------------------------------------------------
 # Small helpers
 # ---------------------------------------------------------------------------

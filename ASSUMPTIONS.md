@@ -25,6 +25,7 @@ Every choice not dictated by the task text. Each one is a default the owner can 
 - **A-23** Enumerations are `typing.Literal` string types validated at runtime, not Enum classes (simpler for the owner). `Status` stays an Enum as the task specifies.
 
 ## Inputs / validation
+- **A-45** Validation rejects infinite values as well as NaN, nonpositive FM/DRD/NMAS, negative optional admixture doses, air >=100%, and water reduction >=100%. These are mathematical input boundaries, not new empirical limits. FM outside the lookup axis gets `FM_EXTRAPOLATION`; outside the broader task soft range also gets `SOFT_LIMIT_FINE_FM`.
 - **A-06** Mode A accepts an `nmas_mm` override. If the override and all four geometry inputs are missing, `ValueError`. If the override is given, step 2 is reported as "user-specified".
 - **A-30** `exposure` is a required Mode B field (it is needed for the default AE air content). It is ignored for non-AE mixes.
 - **A-31** With `batch_volume_m3`, every mass (cement, water, aggregates, SCM) is divided by the batch volume. `air_pct` is unchanged (already per volume).
