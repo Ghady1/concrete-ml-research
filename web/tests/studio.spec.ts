@@ -71,3 +71,29 @@ test('SI US switch preserves submitted physical quantities',async({page})=>{
   expect((await response.json()).report.cement_kg_m3).toBeCloseTo(400,10);
   await expect(page.getByRole('heading',{name:'A clearer picture of your mix.'})).toBeVisible();
 });
+
+test('design steps and named comparison snapshots retain calculated values',async({page})=>{
+  await page.goto('/#design');
+  await page.getByRole('button',{name:'Run analysis',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'A clearer picture of your mix.'})).toBeVisible();
+  await page.getByRole('tab',{name:'Design steps',exact:true}).click();
+  await expect(page.getByText('What governed this design?',{exact:true})).toBeVisible();
+  await expect(page.getByText(/Other convention:/)).toBeVisible();
+  page.once('dialog',dialog=>dialog.accept('First design'));
+  await page.getByRole('button',{name:'Save for comparison',exact:true}).click();
+  await page.getByRole('button',{name:'Edit inputs'}).click();
+  await page.getByRole('textbox',{name:/Specified strength/}).fill('30');
+  await page.getByRole('button',{name:'Run analysis',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'A clearer picture of your mix.'})).toBeVisible();
+  page.once('dialog',dialog=>dialog.accept('Second design'));
+  await page.getByRole('button',{name:'Save for comparison',exact:true}).click();
+  await page.getByRole('link',{name:'Compare snapshots',exact:true}).click();
+  await expect(page.getByRole('heading',{name:'Compare, with the context intact.'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'First design',exact:true})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Second design',exact:true})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'What changed between these mixes?'})).toBeVisible();
+  const shots=await page.evaluate(()=>JSON.parse(sessionStorage.getItem('crs.compare.v1')||'[]'));
+  expect(shots).toHaveLength(2);
+  expect(shots[0].inputs.specified_fc_mpa).toBe(25);
+  expect(shots[1].inputs.specified_fc_mpa).toBe(30);
+});
