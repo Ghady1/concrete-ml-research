@@ -1,0 +1,24 @@
+{
+  "meta": {
+    "id": "age_coefficients",
+    "title": "Strength-age coefficients f(t) = f28 * t / (a + b t)",
+    "source": "ACI 209R-92 (coefficients as given in the project task); verify against ACI 209R-92",
+    "verified_against_primary": false,
+    "units": {
+      "a_days": "days",
+      "b": "-"
+    },
+    "notes": "Types II, IV, V use Type I coefficients with a flag. Validity roughly 20-70 MPa (flag_thresholds)."
+  },
+  "kind": "mapping",
+  "values": {
+    "moist.type_I.a_days": 4.0,
+    "moist.type_I.b": 0.85,
+    "moist.type_III.a_days": 2.3,
+    "moist.type_III.b": 0.92,
+    "steam.type_I.a_days": 1.0,
+    "steam.type_I.b": 0.95,
+    "steam.type_III.a_days": 0.7,
+    "steam.type_III.b": 0.98
+  }
+}

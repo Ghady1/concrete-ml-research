@@ -1,0 +1,20 @@
+{
+  "meta": {
+    "id": "wc_vs_specified_fc",
+    "title": "Water-cement ratio vs SPECIFIED compressive strength f'c (stored, not used by default)",
+    "source": "CIE308 Ch4 Part B slides (Dr. M. Tawk), after ACI 211.1; verify against ACI 211.1-91 and PCA Design and Control of Concrete Mixtures",
+    "verified_against_primary": false,
+    "units": {
+      "x": "MPa (f'c, specified)",
+      "non_ae": "w/c (-)",
+      "ae": "w/c (-)"
+    },
+    "notes": "Different basis from wc_vs_strength (specified vs required average); see OPEN_QUESTIONS Q2."
+  },
+  "kind": "series",
+  "x": [17, 21, 24, 28, 31],
+  "series": {
+    "non_ae": [0.67, 0.58, 0.51, 0.44, 0.38],
+    "ae": [0.54, 0.46, 0.4, 0.35, null]
+  }
+}

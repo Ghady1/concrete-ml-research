@@ -1,0 +1,18 @@
+{
+  "meta": {
+    "id": "min_cement_flatwork",
+    "title": "Minimum cement content for floors / flatwork (ACI 302)",
+    "source": "CIE308 Ch4 Part B slides (Dr. M. Tawk), after ACI 211.1; verify against ACI 211.1-91 and PCA Design and Control of Concrete Mixtures",
+    "verified_against_primary": false,
+    "units": {
+      "x": "mm (NMAS)",
+      "min_cement_kg_m3": "kg/m3"
+    },
+    "notes": "No values above 37.5 mm NMAS (OPEN_QUESTIONS Q19)."
+  },
+  "kind": "series",
+  "x": [9.5, 12.5, 19, 25, 37.5],
+  "series": {
+    "min_cement_kg_m3": [360, 350, 320, 310, 280]
+  }
+}

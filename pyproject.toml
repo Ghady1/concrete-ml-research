@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "concrete-ml-research"
+version = "0.1.0"
+description = "LAU research project: AI-assisted prediction of sustainable concrete properties (concretecalc engine + concrete_ml)"
+requires-python = ">=3.10"
+# Core engine dependency is numpy ONLY (CLAUDE.md ground rule 1).
+dependencies = ["numpy"]
+
+[project.optional-dependencies]
+dev = ["pytest", "hypothesis"]
+calibration = ["pandas", "openpyxl"]
+app = ["streamlit", "matplotlib"]
+
+[tool.setuptools.packages.find]
+# Finds both src/concretecalc and the owner's existing src/concrete_ml.
+where = ["src"]
+
+[tool.setuptools.package-data]
+concretecalc = ["data/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

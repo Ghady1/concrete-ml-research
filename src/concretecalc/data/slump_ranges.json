@@ -1,0 +1,28 @@
+{
+  "meta": {
+    "id": "slump_ranges",
+    "title": "Recommended slump by type of construction",
+    "source": "CIE308 Ch4 Part B slides (Dr. M. Tawk), after ACI 211.1; verify against ACI 211.1-91 and PCA Design and Control of Concrete Mixtures",
+    "verified_against_primary": false,
+    "units": {
+      "values": "mm"
+    },
+    "notes": "Max may be increased by 25 mm for hand consolidation (stored for mass concrete as given on the slide)."
+  },
+  "kind": "mapping",
+  "values": {
+    "reinforced_foundation_walls_footings.max_mm": 75,
+    "reinforced_foundation_walls_footings.min_mm": 25,
+    "plain_footings_caissons_substructure_walls.max_mm": 75,
+    "plain_footings_caissons_substructure_walls.min_mm": 25,
+    "beams_reinforced_walls.max_mm": 100,
+    "beams_reinforced_walls.min_mm": 25,
+    "building_columns.max_mm": 100,
+    "building_columns.min_mm": 25,
+    "pavements_slabs.max_mm": 75,
+    "pavements_slabs.min_mm": 25,
+    "mass_concrete.max_mm": 75,
+    "mass_concrete.min_mm": 25,
+    "mass_concrete.hand_consolidation_extra_mm": 25
+  }
+}

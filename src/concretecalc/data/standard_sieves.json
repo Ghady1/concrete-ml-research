@@ -1,0 +1,23 @@
+{
+  "meta": {
+    "id": "standard_sieves",
+    "title": "Standard sieve sizes used for maximum size / NMAS selection",
+    "source": "CIE308 Ch4 Part B slides (Dr. M. Tawk), after ACI 211.1; verify against ACI 211.1-91 and PCA Design and Control of Concrete Mixtures",
+    "verified_against_primary": false,
+    "units": {
+      "values": "mm"
+    },
+    "notes": ""
+  },
+  "kind": "mapping",
+  "values": {
+    "9.5": 9.5,
+    "12.5": 12.5,
+    "19": 19,
+    "25": 25,
+    "37.5": 37.5,
+    "50": 50,
+    "75": 75,
+    "150": 150
+  }
+}

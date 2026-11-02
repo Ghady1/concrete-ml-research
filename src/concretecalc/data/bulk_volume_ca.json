@@ -1,0 +1,29 @@
+{
+  "meta": {
+    "id": "bulk_volume_ca",
+    "title": "Bulk volume of dry-rodded coarse aggregate per unit volume of concrete (b/b0)",
+    "source": "CIE308 Ch4 Part B slides (Dr. M. Tawk), after ACI 211.1; verify against ACI 211.1-91 and PCA Design and Control of Concrete Mixtures",
+    "verified_against_primary": false,
+    "units": {
+      "rows": "mm (NMAS)",
+      "cols": "- (fineness modulus of fine aggregate)",
+      "b_b0": "- (m3 dry-rodded CA per m3 concrete)"
+    },
+    "notes": "FM outside 2.40-3.00 is extrapolated with a flag."
+  },
+  "kind": "grid2d",
+  "rows": [9.5, 12.5, 19, 25, 37.5, 50, 75, 150],
+  "cols": [2.4, 2.6, 2.8, 3.0],
+  "variants": {
+    "b_b0": [
+      [0.5, 0.48, 0.46, 0.44],
+      [0.59, 0.57, 0.55, 0.53],
+      [0.66, 0.64, 0.62, 0.6],
+      [0.71, 0.69, 0.67, 0.65],
+      [0.75, 0.73, 0.71, 0.69],
+      [0.78, 0.76, 0.74, 0.72],
+      [0.82, 0.8, 0.78, 0.76],
+      [0.87, 0.85, 0.83, 0.81]
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "meta": {
+    "id": "durability",
+    "title": "Maximum w/c and minimum f'c for durability exposure classes",
+    "source": "CIE308 Ch4 Part B slides (Dr. M. Tawk), after ACI 211.1; verify against ACI 211.1-91 and PCA Design and Control of Concrete Mixtures",
+    "verified_against_primary": false,
+    "units": {
+      "max_wc": "- (w/c)",
+      "min_fc_psi": "psi",
+      "full_hydration": "- (w/c)"
+    },
+    "notes": "corrosion_protection = corrosion protection of reinforcement with deicers / seawater. min_fc is stored in psi as given; converted to MPa at lookup."
+  },
+  "kind": "mapping",
+  "values": {
+    "low_permeability.max_wc": 0.5,
+    "low_permeability.min_fc_psi": 4000,
+    "freeze_thaw_moist.max_wc": 0.45,
+    "freeze_thaw_moist.min_fc_psi": 4500,
+    "corrosion_protection.max_wc": 0.4,
+    "corrosion_protection.min_fc_psi": 5000,
+    "full_hydration.min_wc_lower": 0.22,
+    "full_hydration.min_wc_upper": 0.25
+  }
+}
