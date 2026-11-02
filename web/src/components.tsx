@@ -36,9 +36,9 @@ export function Toggle({ label, checked, onChange, help }: { label: string; chec
   return <label className="toggle"><input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)}/>
     <span><strong>{label}</strong>{help && <small>{help}</small>}</span></label>;
 }
-export function Section({ title, eyebrow, children, id, description }: { title: string; eyebrow?: string; children: ReactNode; id?: string; description?: string }) {
-  return <section className="form-section" id={id}><div className="section-heading">{eyebrow && <span className="eyebrow">{eyebrow}</span>}
-    <h2>{title}</h2>{description && <p>{description}</p>}</div>{children}</section>;
+export function Section({ title, eyebrow, children, id, description, companion }: { title: string; eyebrow?: string; children: ReactNode; id?: string; description?: string; companion?: ReactNode }) {
+  return <section className="form-section" id={id}><div className={'section-heading' + (companion ? ' with-companion' : '')}><div>{eyebrow && <span className="eyebrow">{eyebrow}</span>}
+    <h2>{title}</h2>{description && <p>{description}</p>}</div>{companion}</div>{children}</section>;
 }
 export function PageHeading({ eyebrow, title, children }: { eyebrow: string; title: string; children?: ReactNode }) {
   return <div className="page-heading"><span className="eyebrow">{eyebrow}</span><h1>{title}</h1>{children && <p>{children}</p>}</div>;

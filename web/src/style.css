@@ -10,3 +10,14 @@
 @media(max-width:1000px){.work-layout{grid-template-columns:140px 1fr;gap:25px}.result-summary{grid-template-columns:repeat(2,1fr)}.result-summary>div:nth-child(3){border-left:0;padding-left:0;border-top:1px solid var(--line)}.result-summary>div:nth-child(4){border-top:1px solid var(--line)}.chart-grid{grid-template-columns:1fr}.snapshot-list{grid-template-columns:1fr}}
 @media(max-width:700px){.work-layout{display:block}.section-rail{display:none}.work-toolbar{align-items:start;flex-direction:column;gap:18px}.work-toolbar>.field{width:100%}.work-toolbar .actions{gap:15px}.run-panel{padding:23px;flex-direction:column;align-items:stretch}.result-summary strong{font-size:23px}.result-summary>div{padding:20px 12px 20px 0}.result-summary>div+div{padding-left:15px}.chart-panel{padding:15px}.chart-heading h3{font-size:22px}.chart-canvas{height:260px}.result-tabs{gap:19px}.upload-zone{padding:25px 18px}.model-toggles{gap:10px}.flag{padding:13px}.flag summary{align-items:start}.form-section{scroll-margin-top:15px}}
 @media print{.result-view.print-only{display:block}.work-layout,.work-toolbar,.result-tabs{display:none!important}.result-summary{margin:10px 0}.chart-grid{grid-template-columns:1fr 1fr}.chart-panel{padding:12px}.chart-panel>.caption{min-height:0}.chart-canvas{height:230px}.data-table{display:none}.result-summary strong{font-size:20px}.print-disclaimer{display:block}.flag>p{display:block}details>summary{font-weight:600}}
+
+/* Original material companions sit in the heading flow, never over form controls. */
+.section-heading.with-companion{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:114px}
+.section-heading.with-companion>div{min-width:0;max-width:700px}
+.material-companion{display:block;width:116px;flex:0 0 116px;pointer-events:none;user-select:none}
+.material-companion svg{display:block;width:100%;height:auto;overflow:visible}
+.companion-body{transform-origin:72px 117px;animation:companion-settle 2.8s ease-in-out 2 both}
+.companion-coarse .companion-body{animation-delay:.12s}.companion-fine .companion-body{animation-delay:.25s}.companion-water .companion-body{animation-delay:.35s}
+@keyframes companion-settle{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-2px) rotate(-1.5deg)}}
+@media(max-width:700px){.section-heading.with-companion{gap:12px;min-height:95px}.material-companion{width:84px;flex-basis:84px}.section-heading.with-companion p{font-size:14px}}
+@media print{.material-companion{display:none}}

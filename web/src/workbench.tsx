@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { ArrowLeft, ArrowRight, RotateCcw, Play, SlidersHorizontal } from 'lucide-react';
 import { Numeric, Select, Toggle, Section, PageHeading } from './components';
+import { MaterialCompanion, type MaterialKind } from './material-companion';
 import { ApiError, request, pretty, type Metadata, type Options, type Prediction, type Design, type MixInputs, type ModeAInputs } from './api';
 import { allFields, materialFields, conditionFields, advancedFields, draftFrom, fieldUnit, materialize, switchUnits, type Draft, type Mode, type Unit, type FieldDef } from './form';
 const Results = lazy(() => import('./results'));
@@ -76,8 +77,8 @@ export default function Workbench({ mode, metadata }: { mode: Mode; metadata: Me
         <Select label="Field moisture convention" value={String(draft.moisture_convention)} options={['course', 'strict'].map(value => ({ value, label: value === 'course' ? 'Course · slide convention' : 'Strict · SSD consistent' }))} onChange={v => update('moisture_convention', v)}/></div>
         <div className="toggle-row">{[['underwater', 'Underwater placement'], ['flatwork', 'Flatwork'], ['hand_consolidated', 'Hand-consolidated mass concrete']].map(([path, label]) => <Toggle key={path} label={label} checked={!!draft[path]} onChange={v => update(path, v)}/>)}</div></>}
     </Section>
-    <div id="materials">{materialFields(mode).map((group, i) => <Section key={group.title} title={group.title} eyebrow={'0' + (i + 2) + ' / Materials'} description={group.description}><div className="fields">{group.fields.map(renderField)}</div></Section>)}</div>
-    {mode === 'evaluate' && <Section title="Water" description="Added water is separate from aggregate free water. Never count surface moisture twice."><div className="fields">{renderField({ path: 'water_kg', label: 'Added water', kind: 'weight' })}</div></Section>}
+    <div id="materials">{materialFields(mode).map((group, i) => <Section key={group.title} title={group.title} eyebrow={'0' + (i + 2) + ' / Materials'} description={group.description} companion={<MaterialCompanion material={(['cement', 'coarse', 'fine'] as MaterialKind[])[i]}/>}><div className="fields">{group.fields.map(renderField)}</div></Section>)}</div>
+    {mode === 'evaluate' && <Section title="Water" description="Added water is separate from aggregate free water. Never count surface moisture twice." companion={<MaterialCompanion material="water"/>}><div className="fields">{renderField({ path: 'water_kg', label: 'Added water', kind: 'weight' })}</div></Section>}
     <Section id="conditions" title="Conditions & air" description="Use the conditions represented by your material set and test specimens."><div className="toggle-row"><Toggle label="Air entrained" checked={!!draft.air_entrained} onChange={v => update('air_entrained', v)}/><Toggle label="Normalize age equation to 28 days" checked={!!options.normalise_age_to_28d} onChange={v => setOptions({ normalise_age_to_28d: v })}/></div>
       <div className="fields">{conditionFields.map(renderField)}{mode === 'evaluate' && <>{renderField({ path: 'age_days', label: 'Test age (days)' })}{renderField({ path: 'air_pct', label: 'Air content (%)', optional: true, help: 'Leave blank for the ACI table default; an entered value is an explicit override.' })}</>}
       <Select label="Out-of-range policy" value={options.policy || 'extrapolate'} options={['extrapolate', 'clamp', 'raise'].map(value => ({ value, label: pretty(value) }))} onChange={v => setOptions({ policy: v as Options['policy'] })}/>

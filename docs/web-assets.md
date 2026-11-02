@@ -62,3 +62,12 @@ Suggested alt text is included in the JSON. If an image is purely decorative
 beside equivalent explanatory text, use empty alt text instead. Do not label the
 photographs as the user's laboratory or as simulated model outputs. The three
 photos total approximately 321 kB; font binaries total approximately 591 kB.
+
+## Original material companions
+
+The cement sack, coarse-aggregate stone, fine-aggregate sand mound and water
+character are original inline SVG artwork in `web/src/material-companion.tsx`.
+They are decorative, have no effect on calculations, use no external assets or
+runtime requests, and add no dependencies. They are excluded from assistive
+technology and printing. Their short settling animation respects both the
+studio motion toggle and the operating system reduced-motion preference.
