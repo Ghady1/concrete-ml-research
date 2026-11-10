@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 620">
+  <defs>
+    <path id="contour" vector-effect="non-scaling-stroke"
+      d="M-84-11C-77-54-20-69 27-55C63-44 98-16 83 15C67 47 28 64-12 56C-57 47-91 20-84-11Z"/>
+  </defs>
+  <g fill="none" stroke-width="1.2">
+    <g transform="translate(246 146) rotate(-17)" stroke="#2a6257" opacity=".14">
+      <use href="#contour" transform="scale(.55)"/>
+      <use href="#contour" transform="scale(.9)"/>
+      <use href="#contour" transform="scale(1.25)"/>
+      <use href="#contour" transform="scale(1.6)"/>
+      <use href="#contour" transform="scale(1.95)"/>
+      <use href="#contour" transform="scale(2.3)"/>
+      <use href="#contour" transform="scale(2.65)"/>
+    </g>
+    <g transform="translate(677 280) rotate(22)" stroke="#a45436" opacity=".12">
+      <use href="#contour" transform="scale(.7)"/>
+      <use href="#contour" transform="scale(1.1)"/>
+      <use href="#contour" transform="scale(1.5)"/>
+      <use href="#contour" transform="scale(1.9)"/>
+      <use href="#contour" transform="scale(2.3)"/>
+      <use href="#contour" transform="scale(2.7)"/>
+      <use href="#contour" transform="scale(3.1)"/>
+    </g>
+  </g>
+</svg>

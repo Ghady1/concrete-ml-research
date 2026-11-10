@@ -46,3 +46,20 @@
 
 .results.preparing-print{width:186mm;max-width:100%;margin-inline:auto}.results.preparing-print .chart-grid{grid-template-columns:1fr}.results.preparing-print .result-summary{grid-template-columns:1fr 1fr}
 @media print{.skip-link{display:none!important}.results{display:flex;flex-direction:column}.results>.page-heading{order:0}.results>.result-summary{order:1}.results>.research-context{order:2}.results>.result-view{order:3}.results>.input-record{order:8}.results>.engineering-notes{order:9}.results>.print-disclaimer{order:10}.results.preparing-print{max-width:100%;margin:0 auto}.results>.engineering-notes,.results>.input-record{break-before:page}}
+
+/* Let the welcome artwork extend past the main column without a horizontal scrollbar. */
+.studio:has(.hero) { overflow-x: clip; }
+.hero {
+  position: relative;
+  isolation: isolate;
+}
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 calc(50% - 50vw);
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(to bottom, transparent 25%, var(--paper)),
+    url('./hero-contours.svg') center top / 1000px auto repeat-x;
+}
